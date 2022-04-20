@@ -18,6 +18,13 @@ set(PROJECT_SOURCES
         main.cpp
         mainwindow.cpp
         mainwindow.h
+        SessionHeader.h
+        SessionHeader.cpp
+        EventType.h
+        SessionEvent.h
+        SessionEvent.cpp
+        ProfilingSession.h
+        ProfilingSession.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
