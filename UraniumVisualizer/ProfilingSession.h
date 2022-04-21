@@ -1,13 +1,12 @@
 #pragma once
 
 #include <iostream>
+#include <sstream>
 #include <SessionHeader.h>
 #include <SessionEvent.h>
 
 namespace UN
 {
-using vec_SE = std::vector<SessionEvent>;
-
     class ProfilingSession
     {
     private:
@@ -15,21 +14,21 @@ using vec_SE = std::vector<SessionEvent>;
         std::vector<SessionEvent> m_events;
 
     public:
-        explicit ProfilingSession(SessionHeader header, vec_SE events);
+        explicit ProfilingSession(SessionHeader header, std::vector<SessionEvent> events);
 
-        [[nodiscard]] inline SessionHeader Header() const
+        [[nodiscard]] inline const SessionHeader& Header() const
         {
             return m_header;
         }
 
-        [[nodiscard]] inline vec_SE Events() const
+        [[nodiscard]] inline const std::vector<SessionEvent>& Events() const
         {
             return m_events;
         }
 
         static ProfilingSession GetFakeProfilingSession();
 
-        static std::string ToString(ProfilingSession ps);
+        static std::string ToString(const ProfilingSession& ps);
     };
 
 //    void printf(ProfilingSession ps);

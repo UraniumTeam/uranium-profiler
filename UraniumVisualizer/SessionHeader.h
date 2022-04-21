@@ -5,22 +5,20 @@
 
 namespace UN
 {
-using vec_str = std::vector<std::string>;
-
     class SessionHeader
     {
     private:
         double   m_NanosecondsInTick = 0;
         uint32_t m_FunctionCount = 0;
-        vec_str  m_FunctionNames;
+        std::vector<std::string>  m_FunctionNames;
         uint32_t m_EventCount = 0;
 
     public:
         explicit SessionHeader(
-                double NanosecondsInTick
-                , uint32_t FunctionCount
-                , vec_str  FunctionNames
-                , uint32_t EventCount);
+                double NanosecondsInTick,
+                uint32_t FunctionCount,
+                std::vector<std::string> FunctionNames,
+                uint32_t EventCount);
 
         [[nodiscard]] inline double NanosecondsInTick() const
         {
@@ -32,7 +30,7 @@ using vec_str = std::vector<std::string>;
             return m_FunctionCount;
         }
 
-        [[nodiscard]] inline const vec_str FunctionNames() const
+        [[nodiscard]] inline const std::vector<std::string>& FunctionNames() const
         {
             return m_FunctionNames;
         }

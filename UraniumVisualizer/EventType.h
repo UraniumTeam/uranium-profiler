@@ -2,7 +2,7 @@
 
 namespace UN
 {
-    enum EventType
+    enum class EventType
     {
         Begin,
         End

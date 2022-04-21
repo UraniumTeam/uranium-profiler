@@ -5,7 +5,7 @@ namespace UN
     SessionEvent::SessionEvent(uint32_t raw_index, uint64_t cpu_ticks)
         : m_FunctionIndex(raw_index & 0x0fffffff)
         , m_CpuTicks(cpu_ticks)
-        , m_Type((raw_index >> 28) == 0x0 ? Begin: End){}
+        , m_Type((raw_index >> 28) == 0x0 ? EventType::Begin: EventType::End){}
 
 
 //    SessionEvent SessionEvent::GetFakeEvent()

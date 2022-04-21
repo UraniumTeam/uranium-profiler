@@ -2,9 +2,9 @@
 
 namespace UN
 {
-    ProfilingSession::ProfilingSession(SessionHeader header, vec_SE events)
-        : m_header(header)
-        , m_events(events)
+    ProfilingSession::ProfilingSession(SessionHeader header, std::vector<SessionEvent> events)
+        : m_header(std::move(header))
+        , m_events(std::move(events))
     {
 
     }
@@ -15,21 +15,23 @@ namespace UN
         return ProfilingSession(h, SessionEvent::GetFakeEvents(h.EventCount()));
     }
 
-    std::string ProfilingSession::ToString(ProfilingSession ps)
+    std::string ProfilingSession::ToString(const ProfilingSession& ps)
     {
-        std::string res;
-        res.append("NanosecondsInTick "
-                   + std::to_string(ps.Header().NanosecondsInTick())
-                   + ";\nFunctionCount "
-                   + std::to_string(ps.Header().EventCount())
-                   + ";\nFunctionNames:\n");
+        std::stringstream res;
+        res << "NanosecondsInTick "
+            << std::to_string(ps.Header().NanosecondsInTick())
+            << ";\nFunctionCount "
+            << std::to_string(ps.Header().EventCount())
+            << ";\nFunctionNames:\n";
         auto h = ps.Header().FunctionNames();
-        res.append(h.at(0));
+        res << h.at(0);
         for (auto i = h.begin() + 1; i != h.end(); ++i)
-            res.append(", " + *i);
-        res.append(";\nEventCount "
-                   + std::to_string(ps.Header().EventCount()));
-        return res;
+        {
+            res << ", " << *i;
+        }
+        res << ";\nEventCount "
+            << std::to_string(ps.Header().EventCount());
+        return res.str();
     }
 
 //    void printf(ProfilingSession ps)
