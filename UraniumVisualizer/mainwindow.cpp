@@ -2,9 +2,9 @@
 #include "MainFrame.h"
 #include <QApplication>
 #include <QDockWidget>
+#include <QHeaderView>
 #include <QPushButton>
 #include <QResizeEvent>
-#include <QHeaderView>
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -53,24 +53,17 @@ void MainWindow::createDockWidgets()
     auto* dock = new QDockWidget(tr("Function Info"), this);
     dock->setPalette(m_Palette);
     m_FunctionInfoTable = new QTableWidget(dock);
-    m_FunctionInfoTable->setStyleSheet(
-        "QHeaderView::section, QHeaderView { background-color: #626262 }");
-    m_FunctionInfoTable->verticalHeader()->setVisible(false);
-    m_FunctionInfoTable->setShowGrid(false);
-
-    {
-        auto* header1 = new QTableWidgetItem(tr("Name"));
-        m_FunctionInfoTable->setHorizontalHeaderItem(0, header1);
-
-        auto* header2 = new QTableWidgetItem(tr("Time in ms"));
-        m_FunctionInfoTable->setHorizontalHeaderItem(1, header2);
-
-        auto* header3 = new QTableWidgetItem(tr("% of parent"));
-        m_FunctionInfoTable->setHorizontalHeaderItem(2, header3);
-    }
-
     m_FunctionInfoTable->setColumnCount(3);
     m_FunctionInfoTable->setRowCount(1);
+    m_FunctionInfoTable->verticalHeader()->setVisible(false);
+    m_FunctionInfoTable->setStyleSheet("QHeaderView::section, QHeaderView { background-color: #626262 }");
+    m_FunctionInfoTable->setShowGrid(false);
+
+    m_FunctionInfoTable->setHorizontalHeaderLabels(
+        QStringList{} << "Name"
+                      << "Time in ms"
+                      << "% of parent");
+
     for (int i = 0; i < 3; ++i)
     {
         auto* newItem = new QTableWidgetItem(tr("..."));
