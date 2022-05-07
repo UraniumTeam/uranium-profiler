@@ -9,10 +9,15 @@ class MainFrame : public QFrame
     UN::ProfilingSession m_ProfilingSession;
 
     double m_PixelsPerTick;
-    uint64_t m_StartPosition;
+    int64_t m_StartPosition;
     int m_FunctionHeight;
 
-    void drawFunction(QPainter& painter, const std::string& functionName, int x, int y, int w);
+    double m_WheelSensitivity;
+    bool m_MousePressed;
+    QPoint m_MousePosition;
+    QPoint m_LastMousePosition;
+
+    void drawFunction(QPainter& painter, const std::string& functionName, int x, int y, int w) const;
     static QColor getFunctionColor(const char* functionName);
 
 protected:
@@ -22,8 +27,10 @@ protected:
         return ((QWidget*) parent())->size();
     }
 
-    // void mousePressEvent(QMouseEvent* event) override;
-    // void mouseReleaseEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
+    void wheelEvent(QWheelEvent* event) override;
 
 public:
     explicit MainFrame(QWidget* parent = nullptr);
