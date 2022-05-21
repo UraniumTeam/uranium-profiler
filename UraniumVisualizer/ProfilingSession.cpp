@@ -3,8 +3,8 @@
 namespace UN
 {
     ProfilingSession::ProfilingSession(SessionHeader header, std::vector<SessionEvent> events)
-        : m_header(std::move(header))
-        , m_events(std::move(events))
+        : m_Header(std::move(header))
+        , m_Events(std::move(events))
     {
 
     }

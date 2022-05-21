@@ -10,20 +10,20 @@ namespace UN
     class ProfilingSession
     {
     private:
-        SessionHeader m_header;
-        std::vector<SessionEvent> m_events;
+        SessionHeader m_Header;
+        std::vector<SessionEvent> m_Events;
 
     public:
         explicit ProfilingSession(SessionHeader header, std::vector<SessionEvent> events);
 
         [[nodiscard]] inline const SessionHeader& Header() const
         {
-            return m_header;
+            return m_Header;
         }
 
         [[nodiscard]] inline const std::vector<SessionEvent>& Events() const
         {
-            return m_events;
+            return m_Events;
         }
 
         static ProfilingSession GetFakeProfilingSession();
