@@ -14,7 +14,7 @@ namespace UN
         uint32_t functionCount;
         std::vector<std::string> functionNames;
         uint16_t nameLength;
-        char* functionName;
+        std::vector<char> functionName;
         uint32_t eventCount;
 
         fread(&nanosecondsInTick, 8, 1, file);
@@ -22,10 +22,9 @@ namespace UN
         for(auto i = 0; i < functionCount; ++i)
         {
             fread(&nameLength, 2, 1, file);
-            functionName = new char[nameLength];
+            functionName.resize(nameLength, 0);
             fread(&functionName, 1, nameLength, file);
-            functionNames.push_back(std::string(functionName));
-            delete[] functionName;
+            functionNames.push_back(std::string(functionName.data(), nameLength));
         }
         fread(&eventCount, 4, 1, file);
 
