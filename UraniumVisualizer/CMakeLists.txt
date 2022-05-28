@@ -25,7 +25,12 @@ set(PROJECT_SOURCES
         SessionEvent.cpp
         ProfilingSession.h
         ProfilingSession.cpp
-    MainFrame.cpp MainFrame.h TimelinePainter.cpp TimelinePainter.h)
+        MainFrame.cpp
+        MainFrame.h
+        FileParser.h
+        FileParser.cpp
+        TimelinePainter.cpp
+        TimelinePainter.h)
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(UraniumVisualizer

@@ -12,15 +12,10 @@ namespace UN
         uint64_t m_CpuTicks = 0;
         EventType m_Type;
 
-//    [[nodiscard]] inline EventType convertToEventType(uint32_t raw_index) const
-//        {
-//            return (raw_index >> 28) == 0x0 ? Begin: End;
-//        }
-
-//    inline void changeEventType()
-//        {
-//            m_Type = m_Type ? Begin: End;
-//        }
+    [[nodiscard]] inline static EventType GetEventType(uint32_t raw_index)
+        {
+            return (raw_index >> 28) == 0x0 ? EventType::Begin: EventType::End;
+        }
 
     public:
         explicit SessionEvent(uint32_t raw_index, uint64_t cpu_ticks);
