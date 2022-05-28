@@ -2,9 +2,9 @@
 
 namespace UN
 {
-    FileParser::FileParser(){}
+    FileParser::FileParser() {}
 
-    const ProfilingSession FileParser::GetProfilingSession(const char* filePath)
+    ProfilingSession FileParser::GetProfilingSession(const char* filePath)
     {
         FILE* file;
         fopen_s(&file, filePath, "rb");
@@ -19,12 +19,12 @@ namespace UN
 
         fread(&nanosecondsInTick, 8, 1, file);
         fread(&functionCount, 4, 1, file);
-        for(auto i = 0; i < functionCount; ++i)
+        for (auto i = 0; i < functionCount; ++i)
         {
             fread(&nameLength, 2, 1, file);
             functionName.resize(nameLength, 0);
-            fread(&functionName, 1, nameLength, file);
-            functionNames.push_back(std::string(functionName.data(), nameLength));
+            fread(functionName.data(), 1, nameLength, file);
+            functionNames.emplace_back(functionName.data(), nameLength);
         }
         fread(&eventCount, 4, 1, file);
 
@@ -35,11 +35,11 @@ namespace UN
         uint32_t functionIndex;
         uint64_t cpuTicks;
 
-        for(auto i = 0; i < h.EventCount(); ++i)
+        for (auto i = 0; i < h.EventCount(); ++i)
         {
             fread(&functionIndex, 4, 1, file);
             fread(&cpuTicks, 8, 1, file);
-            events.push_back(SessionEvent(functionIndex, cpuTicks));
+            events.emplace_back(functionIndex, cpuTicks);
         }
 
         fclose(file);

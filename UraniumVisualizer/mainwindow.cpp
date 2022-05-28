@@ -42,7 +42,9 @@ MainWindow::MainWindow(QWidget* parent)
     setCentralWidget(m_MainFrame);
 
     m_MainFrame->setAutoFillBackground(true);
-    //m_MainFrame->setPalette(m_Palette);
+    auto filename = "C:/Users/raguc/TheCode/uranium-profiler/backend_manual_tests/uranium_session_bin/thread--0.upt";
+    auto session = UN::FileParser::GetProfilingSession(filename);
+    m_MainFrame->setProfilingSession(session);
     m_MainFrame->show();
 
     createDockWidgets();

@@ -35,5 +35,6 @@ protected:
 
 public:
     explicit MainFrame(QWidget* parent = nullptr);
+    void setProfilingSession(const UN::ProfilingSession& session);
     ~MainFrame() override = default;
 };

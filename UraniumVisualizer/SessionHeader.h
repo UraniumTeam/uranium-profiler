@@ -1,24 +1,23 @@
 #pragma once
 
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace UN
 {
     class SessionHeader
     {
     private:
-        double   m_NanosecondsInTick = 0;
-        uint32_t m_FunctionCount = 0;
-        std::vector<std::string>  m_FunctionNames;
+        double m_NanosecondsInTick = 0;
+        uint32_t m_FunctionCount   = 0;
+        std::vector<std::string> m_FunctionNames;
         uint32_t m_EventCount = 0;
 
     public:
-        explicit SessionHeader(
-                double NanosecondsInTick,
-                uint32_t FunctionCount,
-                std::vector<std::string> FunctionNames,
-                uint32_t EventCount);
+        SessionHeader() = default;
+        
+        SessionHeader(
+            double NanosecondsInTick, uint32_t FunctionCount, std::vector<std::string> FunctionNames, uint32_t EventCount);
 
         [[nodiscard]] inline double NanosecondsInTick() const
         {

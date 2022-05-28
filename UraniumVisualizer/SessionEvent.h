@@ -10,7 +10,7 @@ namespace UN
     private:
         uint32_t m_FunctionIndex = 0;
         uint64_t m_CpuTicks = 0;
-        EventType m_Type;
+        EventType m_Type = EventType::None;
 
     [[nodiscard]] inline static EventType GetEventType(uint32_t raw_index)
         {
@@ -18,7 +18,8 @@ namespace UN
         }
 
     public:
-        explicit SessionEvent(uint32_t raw_index, uint64_t cpu_ticks);
+        SessionEvent() = default;
+        SessionEvent(uint32_t raw_index, uint64_t cpu_ticks);
 
         [[nodiscard]] inline uint32_t FunctionIndex() const
         {

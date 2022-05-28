@@ -7,14 +7,13 @@
 
 MainFrame::MainFrame(QWidget* parent)
     : QFrame(parent)
-    , m_ProfilingSession(UN::ProfilingSession::GetFakeProfilingSession())
     , m_PixelsPerTick(0.06)
     , m_WheelSensitivity(1.05)
     , m_FunctionHeight(30)
     , m_MousePressed(false)
+    , m_StartPosition(0)
 {
     setMouseTracking(true);
-    m_StartPosition = (int64_t) m_ProfilingSession.Events()[0].CpuTicks();
     setFrameStyle(QFrame::Panel | QFrame::Sunken);
     setFocusPolicy(Qt::StrongFocus);
 }
@@ -147,4 +146,11 @@ void MainFrame::wheelEvent(QWheelEvent* event)
     m_StartPosition = startPosition - (int64_t)(m_MousePosition.x() / m_PixelsPerTick);
 
     update();
+}
+
+void MainFrame::setProfilingSession(const UN::ProfilingSession& session)
+{
+    m_ProfilingSession = session;
+    m_StartPosition = (int64_t)m_ProfilingSession.Events()[0].CpuTicks();
+    m_ProfilingSession.SortEvents();
 }

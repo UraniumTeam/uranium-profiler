@@ -5,6 +5,7 @@ namespace UN
     enum class EventType
     {
         Begin,
-        End
+        End,
+        None = 0x7fffffff
     };
 } // namespace UN
