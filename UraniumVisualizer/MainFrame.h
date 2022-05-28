@@ -1,6 +1,7 @@
 #pragma once
 #include "ProfilingSession.h"
 #include <QFrame>
+#include <QCursor>
 
 class MainFrame : public QFrame
 {

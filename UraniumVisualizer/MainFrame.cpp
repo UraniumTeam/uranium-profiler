@@ -1,4 +1,5 @@
 #include "MainFrame.h"
+#include "TimelinePainter.h"
 #include <QMouseEvent>
 #include <QPainter>
 #include <array>
@@ -49,8 +50,16 @@ void MainFrame::paintEvent(QPaintEvent* e)
         endPos = std::clamp(endPos, (double)(rect.left() - pad), (double)(rect.right() + pad));
 
         const auto& name = m_ProfilingSession.Header().FunctionNames()[event.FunctionIndex()];
-        drawFunction(painter, name, (int)startPos, m_FunctionHeight * (int)eventStack.size() + 10, (int)(endPos - startPos));
+        drawFunction(painter, name, (int)startPos, m_FunctionHeight * (int)(eventStack.size() + 1) + 5, (int)(endPos - startPos));
     }
+
+    UN::TimelinePainter tlPainter(painter, m_ProfilingSession.Header().NanosecondsInTick());
+    tlPainter.setRegion(m_StartPosition, m_PixelsPerTick);
+    tlPainter.setColor(Qt::white);
+    tlPainter.setRect(rect);
+    tlPainter.setWidth(m_FunctionHeight);
+    tlPainter.setLineWidth(1);
+    tlPainter.draw();
 }
 
 void MainFrame::drawFunction(QPainter& painter, const std::string& functionName, int x, int y, int w) const
@@ -82,12 +91,15 @@ void MainFrame::mouseMoveEvent(QMouseEvent* event)
 {
     QWidget::mouseMoveEvent(event);
 
-    m_MousePosition = event->pos();
+    m_MousePosition = QCursor::pos();
     if (m_MousePressed)
     {
         auto diffX     = m_LastMousePosition.x() - m_MousePosition.x();
         auto diffTicks = diffX / m_PixelsPerTick;
         m_StartPosition += (int64_t)diffTicks;
+
+        m_MousePosition = m_LastMousePosition;
+        QCursor::setPos(m_LastMousePosition);
     }
     m_LastMousePosition = m_MousePosition;
     update();
@@ -124,6 +136,12 @@ void MainFrame::wheelEvent(QWheelEvent* event)
     else
     {
         m_PixelsPerTick *= m_WheelSensitivity;
+    }
+
+    const double minPixelsPerTick = 1e-8;
+    if (m_PixelsPerTick < minPixelsPerTick)
+    {
+        m_PixelsPerTick = minPixelsPerTick;
     }
 
     m_StartPosition = startPosition - (int64_t)(m_MousePosition.x() / m_PixelsPerTick);
