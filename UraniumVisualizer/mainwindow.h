@@ -1,5 +1,6 @@
 #pragma once
 #include "ProfilingSession.h"
+#include "FileParser.h"
 #include <QMainWindow>
 #include <QTableWidget>
 

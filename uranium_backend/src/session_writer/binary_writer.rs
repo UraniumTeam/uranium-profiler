@@ -37,7 +37,7 @@ impl BinarySessionWriter {
             file.write(&data.name.as_bytes())?;
         }
 
-        file.write(&(data.len() as u32).to_ne_bytes())?;
+        file.write(&((2 * data.len()) as u32).to_ne_bytes())?;
         for event in data {
             let data = unsafe { event.fn_data.as_ref().unwrap() };
             let index = fn_name_to_index[data.name];

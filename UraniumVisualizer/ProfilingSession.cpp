@@ -1,4 +1,5 @@
 #include "ProfilingSession.h"
+#include <algorithm>
 
 namespace UN
 {
@@ -32,6 +33,13 @@ namespace UN
         res << ";\nEventCount "
             << std::to_string(ps.Header().EventCount());
         return res.str();
+    }
+
+    void ProfilingSession::SortEvents()
+    {
+        std::sort(m_Events.begin(), m_Events.end(), [](const SessionEvent& lhs, const SessionEvent& rhs) {
+            return lhs.CpuTicks() < rhs.CpuTicks();
+        });
     }
 
 //    void printf(ProfilingSession ps)
