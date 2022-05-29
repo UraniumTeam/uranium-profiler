@@ -5,6 +5,7 @@
 #include <QHeaderView>
 #include <QPushButton>
 #include <QResizeEvent>
+#include <fstream>
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -42,9 +43,16 @@ MainWindow::MainWindow(QWidget* parent)
     setCentralWidget(m_MainFrame);
 
     m_MainFrame->setAutoFillBackground(true);
-    auto filename = "C:/Users/raguc/TheCode/uranium-profiler/backend_manual_tests/uranium_session_bin/thread--0.upt";
-    auto session = UN::FileParser::GetProfilingSession(filename);
-    m_MainFrame->setProfilingSession(session);
+
+    auto filename = "C:/Users/raguc/TheCode/uranium-profiler/backend_manual_tests/uranium_session_bin.ups";
+    std::ifstream file(filename);
+    std::string upt;
+    while (file >> upt)
+    {
+        auto session = UN::FileParser::GetProfilingSession(upt.c_str());
+        m_MainFrame->addProfilingSession(session);
+    }
+
     m_MainFrame->show();
 
     createDockWidgets();

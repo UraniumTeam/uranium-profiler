@@ -3,7 +3,7 @@ use std::fs::{create_dir_all, File};
 use crate::session_writer::SessionWriter;
 use crate::{EventData, FunctionData};
 use std::io::Write;
-use std::io;
+use std::{fs, io};
 
 pub struct BinarySessionWriter
 {
@@ -74,12 +74,12 @@ impl SessionWriter for BinarySessionWriter {
             }
             let filename = self.thread_data(thread, i as u64)
                 .expect("couldn't write data to a file");
-            filenames.push(filename)
+            filenames.push(fs::canonicalize(filename).unwrap())
         }
         let mut index_file = File::create(format!("{}.ups", self.filename))
             .expect("couldn't create a session file");
         for filename in filenames {
-            writeln!(&mut index_file, "{}", &filename).unwrap();
+            writeln!(&mut index_file, "{}", filename.to_str().unwrap()).unwrap();
         }
         self
     }

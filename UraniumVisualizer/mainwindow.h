@@ -3,6 +3,7 @@
 #include "FileParser.h"
 #include <QMainWindow>
 #include <QTableWidget>
+#include <vector>
 
 class MainFrame;
 

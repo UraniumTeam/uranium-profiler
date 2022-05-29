@@ -25,8 +25,25 @@ void MainFrame::paintEvent(QPaintEvent* e)
     QPainter painter(this);
     auto rect = contentsRect();
 
+    for (int i = 0; i < m_ProfilingSessions.size(); ++i)
+    {
+        drawThread(painter, i, rect);
+    }
+
+    UN::TimelinePainter tlPainter(painter, m_ProfilingSessions[0].Header().NanosecondsInTick());
+    tlPainter.setRegion(m_StartPosition, m_PixelsPerTick);
+    tlPainter.setColor(Qt::white);
+    tlPainter.setRect(rect);
+    tlPainter.setWidth(m_FunctionHeight);
+    tlPainter.setLineWidth(1);
+    tlPainter.draw();
+}
+
+void MainFrame::drawThread(QPainter& painter, int index, const QRect& rect) const
+{
+    auto& session = m_ProfilingSessions[index];
     std::stack<UN::SessionEvent> eventStack;
-    for (const auto& event : m_ProfilingSession.Events())
+    for (const auto& event : session.Events())
     {
         if (event.EventType() == UN::EventType::Begin)
         {
@@ -48,17 +65,10 @@ void MainFrame::paintEvent(QPaintEvent* e)
         startPos = std::clamp(startPos, (double)(rect.left() - pad), (double)(rect.right() + pad));
         endPos = std::clamp(endPos, (double)(rect.left() - pad), (double)(rect.right() + pad));
 
-        const auto& name = m_ProfilingSession.Header().FunctionNames()[event.FunctionIndex()];
-        drawFunction(painter, name, (int)startPos, m_FunctionHeight * (int)(eventStack.size() + 1) + 5, (int)(endPos - startPos));
+        const auto& name = session.Header().FunctionNames()[event.FunctionIndex()];
+        auto yPosition = m_FunctionHeight * (int)(eventStack.size() + 1) + m_ThreadHeight * index + 5;
+        drawFunction(painter, name, (int)startPos, yPosition, (int)(endPos - startPos));
     }
-
-    UN::TimelinePainter tlPainter(painter, m_ProfilingSession.Header().NanosecondsInTick());
-    tlPainter.setRegion(m_StartPosition, m_PixelsPerTick);
-    tlPainter.setColor(Qt::white);
-    tlPainter.setRect(rect);
-    tlPainter.setWidth(m_FunctionHeight);
-    tlPainter.setLineWidth(1);
-    tlPainter.draw();
 }
 
 void MainFrame::drawFunction(QPainter& painter, const std::string& functionName, int x, int y, int w) const
@@ -66,13 +76,13 @@ void MainFrame::drawFunction(QPainter& painter, const std::string& functionName,
     auto color = getFunctionColor(functionName.c_str());
     painter.fillRect(x + 1, y + 1, w - 2, m_FunctionHeight - 2, color);
 
-    painter.setPen(color.lighter());
+    painter.setPen(QPen(color.lighter(), 1));
     painter.drawLine(x, y + m_FunctionHeight - 1, x, y);
     painter.drawLine(x, y, x + w - 1, y);
     painter.drawLine(x + 1, y + m_FunctionHeight - 1, x + w - 1, y + m_FunctionHeight - 1);
     painter.drawLine(x + w - 1, y + m_FunctionHeight - 1, x + w - 1, y + 1);
 
-    painter.setPen(color.darker());
+    painter.setPen(QPen(color.darker(), 3));
     QTextOption opt;
     opt.setAlignment(Qt::AlignCenter);
     painter.drawText(QRect(x + 1, y + 1, w - 2, m_FunctionHeight - 2), functionName.c_str(), opt);
@@ -148,9 +158,9 @@ void MainFrame::wheelEvent(QWheelEvent* event)
     update();
 }
 
-void MainFrame::setProfilingSession(const UN::ProfilingSession& session)
+void MainFrame::addProfilingSession(const UN::ProfilingSession& session)
 {
-    m_ProfilingSession = session;
-    m_StartPosition = (int64_t)m_ProfilingSession.Events()[0].CpuTicks();
-    m_ProfilingSession.SortEvents();
+    auto& s = m_ProfilingSessions.emplace_back(session);
+    m_StartPosition = (int64_t)s.Events()[0].CpuTicks();
+    s.SortEvents();
 }
