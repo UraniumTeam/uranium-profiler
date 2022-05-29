@@ -12,12 +12,12 @@ class MainFrame : public QFrame
     double m_PixelsPerTick;
     int64_t m_StartPosition;
     int m_FunctionHeight;
+    int m_ThreadHeight;
 
     double m_WheelSensitivity;
     bool m_MousePressed;
     QPoint m_MousePosition;
     QPoint m_LastMousePosition;
-    int m_ThreadHeight = 120;
 
     void drawFunction(QPainter& painter, const std::string& functionName, int x, int y, int w) const;
     void drawThread(QPainter& painter, int index, const QRect& rect) const;

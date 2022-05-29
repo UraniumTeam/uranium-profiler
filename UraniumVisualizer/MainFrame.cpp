@@ -10,6 +10,7 @@ MainFrame::MainFrame(QWidget* parent)
     , m_PixelsPerTick(0.06)
     , m_WheelSensitivity(1.05)
     , m_FunctionHeight(30)
+    , m_ThreadHeight(100)
     , m_MousePressed(false)
     , m_StartPosition(0)
 {
@@ -20,6 +21,9 @@ MainFrame::MainFrame(QWidget* parent)
 
 void MainFrame::paintEvent(QPaintEvent* e)
 {
+    if (!isEnabled()) {
+        return;
+    }
     QFrame::paintEvent(e);
 
     QPainter painter(this);

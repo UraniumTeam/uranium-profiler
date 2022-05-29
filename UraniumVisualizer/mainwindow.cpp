@@ -5,6 +5,7 @@
 #include <QHeaderView>
 #include <QPushButton>
 #include <QResizeEvent>
+#include <QFileDialog>
 #include <fstream>
 
 MainWindow::MainWindow(QWidget* parent)
@@ -12,6 +13,11 @@ MainWindow::MainWindow(QWidget* parent)
 {
     setWindowTitle(tr("Uranium profiler v0.1.0"));
     setUnifiedTitleAndToolBarOnMac(true);
+
+    setStyleSheet(R"(
+QMessageBox {
+    background-color: rgb(53, 53, 53);
+})");
 
     m_Palette = QPalette();
     m_Palette.setColor(QPalette::Window, QColor(53, 53, 53));
@@ -39,22 +45,70 @@ MainWindow::MainWindow(QWidget* parent)
     QApplication::setPalette(m_Palette);
 
     m_MainFrame = new MainFrame(this);
+    m_MainFrame->setEnabled(false);
     m_MainFrame->resize(width(), height());
     setCentralWidget(m_MainFrame);
 
     m_MainFrame->setAutoFillBackground(true);
+    m_MainFrame->show();
 
-    auto filename = "../backend_manual_tests/uranium_session_bin.ups";
-    std::ifstream file(filename);
+    createActions();
+    createDockWidgets();
+}
+
+void MainWindow::createActions()
+{
+    m_OpenAct = new QAction(tr("&New"), this);
+    m_OpenAct->setShortcuts(QKeySequence::Open);
+    m_OpenAct->setStatusTip(tr("Open a session file"));
+    connect(m_OpenAct, &QAction::triggered, this, &MainWindow::openFile);
+    m_AboutAct = new QAction(tr("&About"), this);
+    m_AboutAct->setStatusTip(tr("About the software"));
+    connect(m_AboutAct, &QAction::triggered, this, &MainWindow::showAbout);
+
+    menuBar()->setStyleSheet("background-color: rgb(53, 53, 53);");
+    m_FileMenu = menuBar()->addMenu(tr("&File"));
+    m_FileMenu->addAction(m_OpenAct);
+    m_FileMenu->setStyleSheet("background-color: rgb(53, 53, 53);");
+    m_HelpMenu = menuBar()->addMenu(tr("&Help"));
+    m_HelpMenu->addAction(m_AboutAct);
+    m_HelpMenu->setStyleSheet("background-color: rgb(53, 53, 53);");
+}
+
+void MainWindow::openFile()
+{
+    auto filename = QFileDialog::getOpenFileName(this, tr("Open a session file"));
+    std::ifstream file(filename.toStdString());
     std::string upt;
     while (file >> upt)
     {
         auto session = UN::FileParser::GetProfilingSession(upt.c_str());
         m_MainFrame->addProfilingSession(session);
     }
-    m_MainFrame->show();
+    m_MainFrame->setEnabled(true);
+    m_MainFrame->update();
+}
 
-    createDockWidgets();
+void MainWindow::showAbout()
+{
+    const char* message = R"(<h3>Uranium Profiler v0.1.0</h3>
+        Fast instrumentation for <em>Rust</em><br>
+        Visit our <a href="https://github.com/UraniumTeam/">GitHub</a> for more info and support.<br>
+        <br>
+        Contributors:
+        <ul>
+            <li>Nikita Dubovikov</li>
+            <li>Dmitry Ishoev</li>
+            <li>Daniil Lapygin</li>
+        </ul>
+        <h4>Copyright UraniumTeam (C) 2022</h4>
+    )";
+    QMessageBox msgBox(this);
+    msgBox.setWindowTitle(tr("About"));
+    msgBox.setTextFormat(Qt::RichText);
+    msgBox.setText(message);
+    msgBox.setStandardButtons(QMessageBox::Ok);
+    msgBox.exec();
 }
 
 void MainWindow::createDockWidgets()
