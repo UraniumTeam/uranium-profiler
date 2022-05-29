@@ -44,7 +44,7 @@ MainWindow::MainWindow(QWidget* parent)
 
     m_MainFrame->setAutoFillBackground(true);
 
-    auto filename = "C:/Users/raguc/TheCode/uranium-profiler/backend_manual_tests/uranium_session_bin.ups";
+    auto filename = "../backend_manual_tests/uranium_session_bin.ups";
     std::ifstream file(filename);
     std::string upt;
     while (file >> upt)
@@ -52,7 +52,6 @@ MainWindow::MainWindow(QWidget* parent)
         auto session = UN::FileParser::GetProfilingSession(upt.c_str());
         m_MainFrame->addProfilingSession(session);
     }
-
     m_MainFrame->show();
 
     createDockWidgets();
