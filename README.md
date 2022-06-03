@@ -28,14 +28,14 @@ cd uranium-profiler
 ```
 #### Build the backend
 ```shell
-cd uranium_backend
+cd uranium-backend
 cargo build
 cd ../uranium-prof-macro
 cargo build
 ```
 #### Build the frontend
 ```shell
-cd ../UraniumVisualizer
+cd ../uranium-visualizer
 cmake -S . -B BuildRelease -DCMAKE_BUILD_TYPE=Release
 ```
 #### Run sample program
