@@ -37,25 +37,30 @@ namespace UN
         return result;
     }
 
-    FileParser FileParser::Open(const char* filename)
+    FileParser FileParser::Open(const char* filename, std::vector<ParsingProblem>& problems)
     {
-        FileParser result;
+        FileParser result(problems);
         fopen_s(&result.m_File, filename, "rb");
+        if (result.m_File == nullptr)
+        {
+            problems.push_back(ParsingProblem::Error("Couldn't open a file"));
+            return FileParser(problems);
+        }
         fseek(result.m_File, 0L, SEEK_END);
         result.m_FileSize = ftell(result.m_File);
         fseek(result.m_File, 0L, SEEK_SET);
         return result;
     }
 
-    ProfilingSession FileParser::Parse(std::vector<ParsingProblem>& problems)
+    ProfilingSession FileParser::Parse()
     {
         size_t filePointer = 0;
 
         auto outOfRangeError = [&](const std::string& valueName) -> ProfilingSession {
             std::stringstream ss;
-            ss << "Out of file range at value\"" << valueName << "\""
+            ss << "Out of file range at value \"" << valueName << "\": "
                << "The entire session is broken.";
-            problems.push_back(ParsingProblem::Error(ss.str()));
+            m_Problems.push_back(ParsingProblem::Error(ss.str()));
             return {};
         };
 
@@ -71,7 +76,7 @@ namespace UN
             std::stringstream ss;
             ss << "Probably invalid number of nanoseconds in tick (" << nanosecondsInTick << "): "
                << "Most likely, the entire session is broken.";
-            problems.push_back(ParsingProblem::Error(ss.str()));
+            m_Problems.push_back(ParsingProblem::Error(ss.str()));
             return {};
         }
 
@@ -103,8 +108,8 @@ namespace UN
                 {
                     continue;
                 }
-                problems.push_back(ParsingProblem::Error("A function had an invalid character: "
-                                                         "The entire session is broken."));
+                m_Problems.push_back(ParsingProblem::Error("A function had an invalid character: "
+                                                           "The entire session is broken."));
                 return {};
             }
             functionNames.emplace_back(functionName.data(), nameLength);

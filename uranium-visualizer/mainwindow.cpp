@@ -81,14 +81,17 @@ void MainWindow::openFile()
     auto filename = QFileDialog::getOpenFileName(this, tr("Open a session file")).toStdString();
     std::ifstream file(filename);
     std::string upt;
+    auto hasErrors = false;
     while (file >> upt)
     {
         std::vector<UN::ParsingProblem> problems;
-        auto session = UN::FileParser::Open(upt.c_str()).Parse(problems);
+        auto session = UN::FileParser::Open(upt.c_str(), problems).Parse();
         if (!problems.empty())
         {
-            auto hasErrors = false;
             std::stringstream ss;
+            if (upt.length() > 32) {
+                upt = upt.substr(0, 29) + "...";
+            }
             ss << "<h3>Problems while parsing the file <em>\"" << upt << "\"</em> of session <em>\"" << filename
                << "\"</em>.</h3>";
             for (const auto& problem : problems)
@@ -120,7 +123,7 @@ void MainWindow::openFile()
         }
         m_MainFrame->addProfilingSession(session);
     }
-    m_MainFrame->setEnabled(true);
+    m_MainFrame->setEnabled(!hasErrors);
     m_MainFrame->update();
 }
 
