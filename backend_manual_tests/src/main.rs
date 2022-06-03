@@ -6,13 +6,19 @@ use std::thread;
 use uranium_backend::interface::FunctionData;
 use uranium_prof_macro::profile_func;
 
+/// Doc comment
 #[profile_func]
-fn test_factorial(x: u64) -> u64 {
+pub(crate) fn test_factorial(x: u64) -> u64 {
     thread::sleep(Duration::from_millis(x));
     match x {
         0..=1 => 1,
         _ => x * test_factorial(x - 1),
     }
+}
+
+extern "C" {
+    #[profile_func]
+    pub fn test_function(a: u64, b: u64) -> u64;
 }
 
 fn run_function<T, F>(n: u64, x: T, f: F)
