@@ -2,10 +2,10 @@
 #include "MainFrame.h"
 #include <QApplication>
 #include <QDockWidget>
+#include <QFileDialog>
 #include <QHeaderView>
 #include <QPushButton>
 #include <QResizeEvent>
-#include <QFileDialog>
 #include <fstream>
 
 MainWindow::MainWindow(QWidget* parent)
@@ -77,12 +77,47 @@ void MainWindow::createActions()
 
 void MainWindow::openFile()
 {
-    auto filename = QFileDialog::getOpenFileName(this, tr("Open a session file"));
-    std::ifstream file(filename.toStdString());
+    m_MainFrame->ClearProfilingSessions();
+    auto filename = QFileDialog::getOpenFileName(this, tr("Open a session file")).toStdString();
+    std::ifstream file(filename);
     std::string upt;
     while (file >> upt)
     {
-        auto session = UN::FileParser::GetProfilingSession(upt.c_str());
+        std::vector<UN::ParsingProblem> problems;
+        auto session = UN::FileParser::Open(upt.c_str()).Parse(problems);
+        if (!problems.empty())
+        {
+            auto hasErrors = false;
+            std::stringstream ss;
+            ss << "<h3>Problems while parsing the file <em>\"" << upt << "\"</em> of session <em>\"" << filename
+               << "\"</em>.</h3>";
+            for (const auto& problem : problems)
+            {
+                hasErrors |= problem.Kind == UN::ParsingProblemKind::Error;
+                if (problem.Kind == UN::ParsingProblemKind::Error) {
+                    ss << "<p style='color: red'>";
+                }
+                else {
+                    ss << "<p style='color: yellow'>";
+                }
+                ss << problem.ToString() << "</p>";
+            }
+            if (hasErrors) {
+                ss << "Aborting due to previous error(s)";
+            }
+            QMessageBox msgBox(this);
+            msgBox.setIcon(QMessageBox::Critical);
+            msgBox.setWindowTitle(tr("Problems with session file"));
+            msgBox.setTextFormat(Qt::RichText);
+            msgBox.setText(ss.str().c_str());
+            msgBox.setStandardButtons(QMessageBox::Ok);
+            msgBox.exec();
+            if (hasErrors)
+            {
+                m_MainFrame->ClearProfilingSessions();
+                break;
+            }
+        }
         m_MainFrame->addProfilingSession(session);
     }
     m_MainFrame->setEnabled(true);

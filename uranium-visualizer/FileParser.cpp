@@ -2,42 +2,143 @@
 
 namespace UN
 {
-    FileParser::FileParser() {}
-
-    ProfilingSession FileParser::GetProfilingSession(const char* filePath)
+    std::string ParsingProblem::ToString() const
     {
-        FILE* file;
-        fopen_s(&file, filePath, "rb");
+        std::stringstream ss;
+        switch (Kind)
+        {
+        case ParsingProblemKind::Warning:
+            ss << "warning: ";
+            break;
+        case ParsingProblemKind::Error:
+            ss << "error: ";
+            break;
+        default:
+            break;
+        }
+        ss << Message;
+
+        return ss.str();
+    }
+
+    ParsingProblem ParsingProblem::Warning(std::string message)
+    {
+        ParsingProblem result;
+        result.Message = std::move(message);
+        result.Kind    = ParsingProblemKind::Warning;
+        return result;
+    }
+
+    ParsingProblem ParsingProblem::Error(std::string message)
+    {
+        ParsingProblem result;
+        result.Message = std::move(message);
+        result.Kind    = ParsingProblemKind::Error;
+        return result;
+    }
+
+    FileParser FileParser::Open(const char* filename)
+    {
+        FileParser result;
+        fopen_s(&result.m_File, filename, "rb");
+        fseek(result.m_File, 0L, SEEK_END);
+        result.m_FileSize = ftell(result.m_File);
+        fseek(result.m_File, 0L, SEEK_SET);
+        return result;
+    }
+
+    ProfilingSession FileParser::Parse(std::vector<ParsingProblem>& problems)
+    {
+        size_t filePointer = 0;
+
+        auto outOfRangeError = [&](const std::string& valueName) -> ProfilingSession {
+            std::stringstream ss;
+            ss << "Out of file range at value\"" << valueName << "\""
+               << "The entire session is broken.";
+            problems.push_back(ParsingProblem::Error(ss.str()));
+            return {};
+        };
 
         double nanosecondsInTick;
-        uint32_t functionCount;
-        std::vector<std::string> functionNames;
-        uint16_t nameLength;
-        std::vector<char> functionName;
-        uint32_t eventCount;
-        fread(&nanosecondsInTick, sizeof(double), 1, file);
-        fread(&functionCount, sizeof(uint32_t), 1, file);
-        for(uint32_t i = 0; i < functionCount; ++i)
+        if (!TryReadFromFile(&nanosecondsInTick, filePointer))
         {
-            fread(&nameLength, sizeof(uint16_t), 1, file);
+            return outOfRangeError("Nanoseconds in tick");
+        }
+
+        // TODO: maybe change hardcoded values and make them customizable or add a way to suppress these errors
+        if (nanosecondsInTick < 0.01 || nanosecondsInTick > 100)
+        {
+            std::stringstream ss;
+            ss << "Probably invalid number of nanoseconds in tick (" << nanosecondsInTick << "): "
+               << "Most likely, the entire session is broken.";
+            problems.push_back(ParsingProblem::Error(ss.str()));
+            return {};
+        }
+
+        uint32_t functionCount;
+        if (!TryReadFromFile(&functionCount, filePointer))
+        {
+            return outOfRangeError("Function count");
+        }
+
+        std::vector<std::string> functionNames;
+        for (uint32_t i = 0; i < functionCount; ++i)
+        {
+            uint16_t nameLength;
+            std::vector<char> functionName;
+            if (!TryReadFromFile(&nameLength, filePointer))
+            {
+                return outOfRangeError("Function name length");
+            }
+
             functionName.resize(nameLength, 0);
-            fread(functionName.data(), sizeof(char), nameLength, file);
+            if (!TryReadFromFile(functionName.data(), filePointer, nameLength))
+            {
+                return outOfRangeError("Function name");
+            }
+            for (auto c : functionName)
+            {
+                // TODO: Rust supports unicode in identifiers, so this check may not work in some cases
+                if (std::isalnum(c) || c == '_')
+                {
+                    continue;
+                }
+                problems.push_back(ParsingProblem::Error("A function had an invalid character: "
+                                                         "The entire session is broken."));
+                return {};
+            }
             functionNames.emplace_back(functionName.data(), nameLength);
         }
-        fread(&eventCount, sizeof(uint32_t), 1, file);
-        auto h = SessionHeader(nanosecondsInTick, functionCount, functionNames, eventCount);
+
+        uint32_t eventCount;
+        if (!TryReadFromFile(&eventCount, filePointer))
+        {
+            return outOfRangeError("Event count");
+        }
+        auto header = SessionHeader(nanosecondsInTick, functionCount, functionNames, eventCount);
 
         std::vector<SessionEvent> events;
-        uint32_t functionIndex;
-        uint64_t cpuTicks;
-        for(uint32_t i = 0; i < h.EventCount(); ++i)
+        for (uint32_t i = 0; i < header.EventCount(); ++i)
         {
-            fread(&functionIndex, sizeof(uint32_t), 1, file);
-            fread(&cpuTicks, sizeof(uint64_t), 1, file);
+            uint32_t functionIndex;
+            uint64_t cpuTicks;
+            if (!TryReadFromFile(&functionIndex, filePointer))
+            {
+                return outOfRangeError("Event count");
+            }
+            if (!TryReadFromFile(&cpuTicks, filePointer))
+            {
+                return outOfRangeError("Event count");
+            }
             events.emplace_back(functionIndex, cpuTicks);
         }
 
-        fclose(file);
-        return ProfilingSession(h, events);
+        Close();
+        return { header, events };
+    }
+
+    void FileParser::Close()
+    {
+        fclose(m_File);
     }
 } // namespace UN
