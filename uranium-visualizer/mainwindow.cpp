@@ -58,7 +58,7 @@ QMessageBox {
 
 void MainWindow::createActions()
 {
-    m_OpenAct = new QAction(tr("&New"), this);
+    m_OpenAct = new QAction(tr("&Open"), this);
     m_OpenAct->setShortcuts(QKeySequence::Open);
     m_OpenAct->setStatusTip(tr("Open a session file"));
     connect(m_OpenAct, &QAction::triggered, this, &MainWindow::openFile);
