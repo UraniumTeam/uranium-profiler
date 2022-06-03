@@ -40,7 +40,7 @@ cmake -S . -B BuildRelease -DCMAKE_BUILD_TYPE=Release
 ```
 #### Run sample program
 ```shell
-cd ../backend_manual_tests
+cd ../backend-manual-tests
 cargo run
 ```
 Now you should see `uranium_session_bin.ups` file and `uranium_session_bin` directory that store data collected by the profier's backend during
