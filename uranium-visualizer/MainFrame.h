@@ -10,8 +10,16 @@ class MainFrame : public QFrame
 
     std::vector<UN::ProfilingSession> m_ProfilingSessions;
 
-    QAction m_FunctionSelectedAction;
+    QAction m_FunctionHoverChanged;
+    QAction m_FunctionSelectionChanged;
+
+    bool m_HasHoveredFunction;
+    UN::SessionEvent* m_HoveredFunctionBegin;
+    UN::SessionEvent* m_HoveredFunctionEnd;
+
     bool m_HasSelectedFunction;
+    UN::SessionEvent* m_SelectedFunctionBegin;
+    UN::SessionEvent* m_SelectedFunctionEnd;
 
     double m_PixelsPerTick;
     int64_t m_StartPosition;
@@ -23,7 +31,7 @@ class MainFrame : public QFrame
     QPoint m_GlobalMousePosition;
     QPoint m_LastGlobalMousePosition;
 
-    void drawFunction(QPainter& painter, const std::string& functionName, int x, int y, int w, bool isSelected);
+    void drawFunction(QPainter& painter, const std::string& functionName, int x, int y, int w, bool isHovered, bool isSelected) const;
     bool drawThread(QPainter& painter, int index, const QRect& rect);
     static QColor getFunctionColor(const char* functionName);
     [[nodiscard]] int threadHeight(int index) const;

@@ -17,9 +17,9 @@ MainFrame::MainFrame(QWidget* parent)
     setFrameStyle(QFrame::Panel | QFrame::Sunken);
     setFocusPolicy(Qt::StrongFocus);
 
-    connect(&m_FunctionSelectedAction, &QAction::triggered, this, [this]() {
+    connect(&m_FunctionHoverChanged, &QAction::triggered, this, [this]() {
         QCursor cursor;
-        if (m_HasSelectedFunction)
+        if (m_HasHoveredFunction)
         {
             cursor.setShape(Qt::CrossCursor);
         }
@@ -48,15 +48,15 @@ void MainFrame::paintEvent(QPaintEvent* e)
     QPainter painter(this);
     auto rect = contentsRect();
 
-    auto wasSelected = m_HasSelectedFunction;
-    m_HasSelectedFunction = false;
+    auto wasHovered      = m_HasHoveredFunction;
+    m_HasHoveredFunction = false;
     for (int i = 0; i < m_ProfilingSessions.size(); ++i)
     {
-        m_HasSelectedFunction |= drawThread(painter, i, rect);
+        m_HasHoveredFunction |= drawThread(painter, i, rect);
     }
-    if (wasSelected != m_HasSelectedFunction)
+    if (wasHovered != m_HasHoveredFunction)
     {
-        m_FunctionSelectedAction.trigger();
+        m_FunctionHoverChanged.trigger();
     }
 
     UN::TimelinePainter tlPainter(painter, m_ProfilingSessions[0].Header().NanosecondsInTick());
@@ -72,20 +72,22 @@ bool MainFrame::drawThread(QPainter& painter, int index, const QRect& rect)
 {
     auto mousePosition = mousePositionInTicks();
     auto& session      = m_ProfilingSessions[index];
-    std::stack<UN::SessionEvent> eventStack;
+    std::stack<size_t> eventStack;
 
     int selX, selY, selW;
-    uint32_t selIndex;
-    auto hasSelected =  false;
-    for (const auto& event : session.Events())
+    auto hasHovered = false;
+    auto hasSelected = false;
+    auto hasHoveredSelected = false;
+    for (size_t i = 0; i < session.Events().size(); ++i)
     {
+        auto& event = session.Events()[i];
         if (event.EventType() == UN::EventType::Begin)
         {
-            eventStack.push(event);
+            eventStack.push(i);
             continue;
         }
 
-        auto beginEvent = eventStack.top();
+        auto& beginEvent = session.Events()[eventStack.top()];
         eventStack.pop();
         auto startPos = (double)((int64_t)beginEvent.CpuTicks() - m_StartPosition) * m_PixelsPerTick;
         auto endPos   = (double)((int64_t)event.CpuTicks() - m_StartPosition) * m_PixelsPerTick;
@@ -101,38 +103,67 @@ bool MainFrame::drawThread(QPainter& painter, int index, const QRect& rect)
 
         const auto& name = session.Header().FunctionNames()[event.FunctionIndex()];
         auto yPosition   = m_FunctionHeight * (int)(eventStack.size() + 1) + threadHeight(index) * index + 5;
-        auto isSelected  = mousePosition >= beginEvent.CpuTicks() && mousePosition < event.CpuTicks()
+        auto isHovered   = mousePosition >= beginEvent.CpuTicks() && mousePosition < event.CpuTicks()
             && m_LocalMousePosition.y() >= yPosition && m_LocalMousePosition.y() < yPosition + m_FunctionHeight;
-        if (isSelected)
+        if (isHovered)
         {
-            selIndex              = event.FunctionIndex();
-            selX                  = (int)startPos;
-            selY                  = yPosition;
-            selW                  = (int)(endPos - startPos);
+            m_HoveredFunctionBegin = &beginEvent;
+            m_HoveredFunctionEnd   = &event;
+
+            hasHovered = true;
+        }
+        if (m_HasSelectedFunction && m_SelectedFunctionBegin == &beginEvent)
+        {
+            selX       = (int)startPos;
+            selY       = yPosition;
+            selW       = (int)(endPos - startPos);
+            hasHoveredSelected = isHovered;
+
             hasSelected = true;
         }
-        else
+        if (!m_HasSelectedFunction || m_SelectedFunctionBegin != &beginEvent)
         {
-            drawFunction(painter, name, (int)startPos, yPosition, (int)(endPos - startPos), false);
+            drawFunction(painter, name, (int)startPos, yPosition, (int)(endPos - startPos), isHovered, false);
         }
     }
     if (hasSelected)
     {
-        const auto& name = session.Header().FunctionNames()[selIndex];
-        drawFunction(painter, name, selX, selY, selW, true);
+        const auto& name = session.Header().FunctionNames()[m_SelectedFunctionBegin->FunctionIndex()];
+        drawFunction(painter, name, selX, selY, selW, hasHoveredSelected, true);
     }
 
-    return hasSelected;
+    return hasHovered;
 }
 
-void MainFrame::drawFunction(QPainter& painter, const std::string& functionName, int x, int y, int w, bool isSelected)
+void MainFrame::drawFunction(QPainter& painter, const std::string& functionName, int x, int y, int w, bool isHovered, bool isSelected) const
 {
     auto color = getFunctionColor(functionName.c_str());
-    if (isSelected)
+    if (w <= 3)
+    {
+        if (isSelected)
+        {
+            painter.setPen(QPen(Qt::green, w));
+            painter.drawLine(x, y + m_FunctionHeight - 1, x, 0);
+        }
+        else
+        {
+            painter.setPen(QPen(color, w));
+            painter.drawLine(x, y + m_FunctionHeight - 1, x, y);
+        }
+        return;
+    }
+    if (isHovered)
     {
         color = color.lighter();
     }
-    painter.fillRect(x + 1, y + 1, w - 2, m_FunctionHeight - 2, color);
+    if (w > 20)
+    {
+        painter.fillRect(x + 1, y + 1, w - 2, m_FunctionHeight - 2, color);
+    }
+    else
+    {
+        painter.fillRect(x, y, w, m_FunctionHeight, color);
+    }
 
     if (isSelected)
     {
@@ -141,7 +172,7 @@ void MainFrame::drawFunction(QPainter& painter, const std::string& functionName,
         painter.drawLine(x + 1, y + m_FunctionHeight - 1, x + w - 1, y + m_FunctionHeight - 1);
         painter.drawLine(x + w - 1, y + m_FunctionHeight - 1, x + w - 1, 0);
     }
-    else
+    else if (w > 20)
     {
         painter.setPen(QPen(color.lighter(), 1));
         painter.drawLine(x, y + m_FunctionHeight - 1, x, y);
@@ -150,10 +181,12 @@ void MainFrame::drawFunction(QPainter& painter, const std::string& functionName,
         painter.drawLine(x + w - 1, y + m_FunctionHeight - 1, x + w - 1, y + 1);
     }
 
-    painter.setPen(QPen(color.darker(), 3));
-    QTextOption opt;
-    opt.setAlignment(Qt::AlignCenter);
-    painter.drawText(QRect(x + 1, y + 1, w - 2, m_FunctionHeight - 2), functionName.c_str(), opt);
+    if (w > 30)
+    {
+        painter.setPen(QPen(color.darker(), 3));
+        QRect clip(x + 1, y + 1, w - 2, m_FunctionHeight - 2);
+        painter.drawText(clip, Qt::AlignCenter | Qt::TextSingleLine, functionName.c_str());
+    }
 }
 
 QColor MainFrame::getFunctionColor(const char* functionName)
@@ -187,9 +220,23 @@ void MainFrame::mouseMoveEvent(QMouseEvent* event)
 void MainFrame::mousePressEvent(QMouseEvent* event)
 {
     QWidget::mousePressEvent(event);
-    if (event->button() == Qt::MouseButton::RightButton)
+    if (event->button() == Qt::RightButton)
     {
         m_MousePressed = true;
+    }
+    if (event->button() == Qt::LeftButton)
+    {
+        if (m_HasHoveredFunction)
+        {
+            m_HasSelectedFunction = true;
+            m_SelectedFunctionBegin = m_HoveredFunctionBegin;
+            m_SelectedFunctionEnd = m_HoveredFunctionEnd;
+        }
+        else
+        {
+            m_HasSelectedFunction = false;
+        }
+        update();
     }
 }
 
