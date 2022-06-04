@@ -32,6 +32,9 @@ impl JsonSessionWriter {
         while *index < data.len() {
             let ref event = data[*index];
             if event.start < end {
+                if event.end == 0 {
+                    continue;
+                }
                 let name = unsafe { (*event.fn_data).name };
                 let object = self.construct_object(true, event.start, tid, name);
                 json.push(object);
