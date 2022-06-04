@@ -1,4 +1,4 @@
-# Uranium profiler
+# Uranium Profiler
 Uranium is fast and lightweight instrumentation profiler for Rust written in Rust and C++.
 
 ![Screenshot](screenshot1.png)
