@@ -12,16 +12,17 @@ class MainFrame : public QFrame
     double m_PixelsPerTick;
     int64_t m_StartPosition;
     int m_FunctionHeight;
-    int m_ThreadHeight;
 
     double m_WheelSensitivity;
     bool m_MousePressed;
-    QPoint m_MousePosition;
-    QPoint m_LastMousePosition;
+    QPoint m_LocalMousePosition;
+    QPoint m_GlobalMousePosition;
+    QPoint m_LastGlobalMousePosition;
 
-    void drawFunction(QPainter& painter, const std::string& functionName, int x, int y, int w) const;
+    void drawFunction(QPainter& painter, const std::string& functionName, int x, int y, int w, bool isSelected) const;
     void drawThread(QPainter& painter, int index, const QRect& rect) const;
     static QColor getFunctionColor(const char* functionName);
+    [[nodiscard]] int threadHeight(int index) const;
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -37,7 +38,8 @@ protected:
 
 public:
     explicit MainFrame(QWidget* parent = nullptr);
+    [[nodiscard]] int64_t mousePositionInTicks() const;
     void addProfilingSession(const UN::ProfilingSession& session);
-    void ClearProfilingSessions();
+    void clearProfilingSessions();
     ~MainFrame() override = default;
 };

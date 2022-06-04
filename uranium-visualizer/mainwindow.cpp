@@ -77,7 +77,7 @@ void MainWindow::createActions()
 
 void MainWindow::openFile()
 {
-    m_MainFrame->ClearProfilingSessions();
+    m_MainFrame->clearProfilingSessions();
     auto filename = QFileDialog::getOpenFileName(this, tr("Open a session file")).toStdString();
     std::ifstream file(filename);
     std::string upt;
@@ -117,7 +117,7 @@ void MainWindow::openFile()
             msgBox.exec();
             if (hasErrors)
             {
-                m_MainFrame->ClearProfilingSessions();
+                m_MainFrame->clearProfilingSessions();
                 break;
             }
         }
