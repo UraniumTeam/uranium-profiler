@@ -2,12 +2,16 @@
 #include "ProfilingSession.h"
 #include <QFrame>
 #include <QCursor>
+#include <QAction>
 
 class MainFrame : public QFrame
 {
     Q_OBJECT
 
     std::vector<UN::ProfilingSession> m_ProfilingSessions;
+
+    QAction m_FunctionSelectedAction;
+    bool m_HasSelectedFunction;
 
     double m_PixelsPerTick;
     int64_t m_StartPosition;
@@ -19,8 +23,8 @@ class MainFrame : public QFrame
     QPoint m_GlobalMousePosition;
     QPoint m_LastGlobalMousePosition;
 
-    void drawFunction(QPainter& painter, const std::string& functionName, int x, int y, int w, bool isSelected) const;
-    void drawThread(QPainter& painter, int index, const QRect& rect) const;
+    void drawFunction(QPainter& painter, const std::string& functionName, int x, int y, int w, bool isSelected);
+    bool drawThread(QPainter& painter, int index, const QRect& rect);
     static QColor getFunctionColor(const char* functionName);
     [[nodiscard]] int threadHeight(int index) const;
 

@@ -16,6 +16,15 @@ MainFrame::MainFrame(QWidget* parent)
     setMouseTracking(true);
     setFrameStyle(QFrame::Panel | QFrame::Sunken);
     setFocusPolicy(Qt::StrongFocus);
+
+    connect(&m_FunctionSelectedAction, &QAction::triggered, this, [this]() {
+        QCursor cursor;
+        if (m_HasSelectedFunction)
+        {
+            cursor.setShape(Qt::CrossCursor);
+        }
+        setCursor(cursor);
+    });
 }
 
 int64_t MainFrame::mousePositionInTicks() const
@@ -39,9 +48,15 @@ void MainFrame::paintEvent(QPaintEvent* e)
     QPainter painter(this);
     auto rect = contentsRect();
 
+    auto wasSelected = m_HasSelectedFunction;
+    m_HasSelectedFunction = false;
     for (int i = 0; i < m_ProfilingSessions.size(); ++i)
     {
-        drawThread(painter, i, rect);
+        m_HasSelectedFunction |= drawThread(painter, i, rect);
+    }
+    if (wasSelected != m_HasSelectedFunction)
+    {
+        m_FunctionSelectedAction.trigger();
     }
 
     UN::TimelinePainter tlPainter(painter, m_ProfilingSessions[0].Header().NanosecondsInTick());
@@ -53,15 +68,15 @@ void MainFrame::paintEvent(QPaintEvent* e)
     tlPainter.draw();
 }
 
-void MainFrame::drawThread(QPainter& painter, int index, const QRect& rect) const
+bool MainFrame::drawThread(QPainter& painter, int index, const QRect& rect)
 {
     auto mousePosition = mousePositionInTicks();
-    auto& session = m_ProfilingSessions[index];
+    auto& session      = m_ProfilingSessions[index];
     std::stack<UN::SessionEvent> eventStack;
 
     int selX, selY, selW;
     uint32_t selIndex;
-    auto hasSelected = false;
+    auto hasSelected =  false;
     for (const auto& event : session.Events())
     {
         if (event.EventType() == UN::EventType::Begin)
@@ -86,13 +101,14 @@ void MainFrame::drawThread(QPainter& painter, int index, const QRect& rect) cons
 
         const auto& name = session.Header().FunctionNames()[event.FunctionIndex()];
         auto yPosition   = m_FunctionHeight * (int)(eventStack.size() + 1) + threadHeight(index) * index + 5;
-        auto isSelected = mousePosition >= beginEvent.CpuTicks() && mousePosition < event.CpuTicks() &&
-            m_LocalMousePosition.y() >= yPosition && m_LocalMousePosition.y() < yPosition + m_FunctionHeight;
-        if (isSelected) {
-            selIndex = event.FunctionIndex();
-            selX = (int)startPos;
-            selY = yPosition;
-            selW = (int)(endPos - startPos);
+        auto isSelected  = mousePosition >= beginEvent.CpuTicks() && mousePosition < event.CpuTicks()
+            && m_LocalMousePosition.y() >= yPosition && m_LocalMousePosition.y() < yPosition + m_FunctionHeight;
+        if (isSelected)
+        {
+            selIndex              = event.FunctionIndex();
+            selX                  = (int)startPos;
+            selY                  = yPosition;
+            selW                  = (int)(endPos - startPos);
             hasSelected = true;
         }
         else
@@ -105,12 +121,15 @@ void MainFrame::drawThread(QPainter& painter, int index, const QRect& rect) cons
         const auto& name = session.Header().FunctionNames()[selIndex];
         drawFunction(painter, name, selX, selY, selW, true);
     }
+
+    return hasSelected;
 }
 
-void MainFrame::drawFunction(QPainter& painter, const std::string& functionName, int x, int y, int w, bool isSelected) const
+void MainFrame::drawFunction(QPainter& painter, const std::string& functionName, int x, int y, int w, bool isSelected)
 {
     auto color = getFunctionColor(functionName.c_str());
-    if (isSelected) {
+    if (isSelected)
+    {
         color = color.lighter();
     }
     painter.fillRect(x + 1, y + 1, w - 2, m_FunctionHeight - 2, color);
@@ -149,7 +168,7 @@ void MainFrame::mouseMoveEvent(QMouseEvent* event)
 {
     QWidget::mouseMoveEvent(event);
 
-    m_LocalMousePosition = event->pos();
+    m_LocalMousePosition  = event->pos();
     m_GlobalMousePosition = QCursor::pos();
     if (m_MousePressed)
     {
@@ -157,8 +176,8 @@ void MainFrame::mouseMoveEvent(QMouseEvent* event)
         auto diffTicks = diffX / m_PixelsPerTick;
         m_StartPosition += (int64_t)diffTicks;
 
-//        m_GlobalMousePosition = m_LastGlobalMousePosition;
-//        QCursor::setPos(m_LastGlobalMousePosition);
+        // m_GlobalMousePosition = m_LastGlobalMousePosition;
+        // QCursor::setPos(m_LastGlobalMousePosition);
     }
     m_LastGlobalMousePosition = m_GlobalMousePosition;
     update();
@@ -216,6 +235,10 @@ void MainFrame::wheelEvent(QWheelEvent* event)
     if (m_PixelsPerTick < minPixelsPerTick)
     {
         m_PixelsPerTick = minPixelsPerTick;
+    }
+    if (m_FunctionHeight < 30)
+    {
+        m_FunctionHeight = 30;
     }
 
     m_StartPosition = startPosition - (int64_t)(m_GlobalMousePosition.x() / m_PixelsPerTick);
