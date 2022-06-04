@@ -42,7 +42,7 @@ def process_rust_file(filename):
         return
 
 
-p1 = str(Path('../uranium-profiler/uranium_backend'   ).resolve()).replace(os.sep, os.sep * 2)
+p1 = str(Path('../uranium-profiler/uranium-backend'   ).resolve()).replace(os.sep, os.sep * 2)
 p2 = str(Path('../uranium-profiler/uranium-prof-macro').resolve()).replace(os.sep, os.sep * 2)
 
 
