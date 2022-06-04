@@ -1,7 +1,15 @@
 # Uranium Profiler
-Uranium is fast and lightweight instrumentation profiler for Rust written in Rust and C++.
+![Logo](images/logo.png)
 
-![Screenshot](screenshot1.png)
+### Uranium is fast and lightweight instrumentation profiler for Rust written in Rust and C++.
+
+#### Main Features:
+ - Nanosecond resolution
+ - Low overhead per function
+ - GUI application to visualize collected data
+ - Simple integration with excisting programs
+
+![Screenshot](images/screenshot1.png)
 
 ## Building
 The only way to use Uranium is to build it from source.
@@ -15,7 +23,7 @@ Supported platforms:<br>
 
 Please note that currently the backend works only with x86-64 CPUs due to usage of specific instructions (see [tracking issue for this](https://github.com/UraniumTeam/uranium-profiler/issues/11))
 
-#### Prerequisites
+### Prerequisites
 To build and run *frontend*:
  - **CMake v1.17.0** minimum
  - **Qt v6.0.0** minimum
@@ -23,24 +31,24 @@ To build and run *frontend*:
 To build *backend*:
  - **Rust** (Tested with v1.61, may not work with older versions)
 
-#### Clone the repository
+### Clone the repository
 ```shell
 git clone https://github.com/UraniumTeam/uranium-profiler
 cd uranium-profiler
 ```
-#### Build the backend
+### Build the backend
 ```shell
 cd uranium-backend
 cargo build
 cd ../uranium-prof-macro
 cargo build
 ```
-#### Build the frontend
+### Build the frontend
 ```shell
 cd ../uranium-visualizer
 cmake -S . -B BuildRelease -DCMAKE_BUILD_TYPE=Release
 ```
-#### Run sample program
+### Run sample program
 ```shell
 cd ../backend-manual-tests
 cargo run
