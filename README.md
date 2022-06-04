@@ -1,6 +1,8 @@
 # Uranium profiler
 Uranium is fast and lightweight instrumentation profiler for Rust written in Rust and C++.
 
+![Screenshot](screenshot1.png)
+
 ## Building
 The only way to use Uranium is to build it from source.
 
@@ -11,7 +13,7 @@ Supported platforms:<br>
 | Frontend | ✔       |       |       |
 | Backend  | ✔       | ✔     |       |
 
-Please note that currently the backend works only with x86-64 CPUs due to usage of specific instructions (see ![tracking issue for this](https://github.com/UraniumTeam/uranium-profiler/issues/11))
+Please note that currently the backend works only with x86-64 CPUs due to usage of specific instructions (see [tracking issue for this](https://github.com/UraniumTeam/uranium-profiler/issues/11))
 
 #### Prerequisites
 To build and run *frontend*:
