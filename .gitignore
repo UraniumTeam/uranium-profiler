@@ -1,6 +1,6 @@
 # Rust
 Cargo.lock
-/target
+**/target/
 **/*.rs.bk
 
 # C++ objects and libs
@@ -15,8 +15,7 @@ Cargo.lock
 *.dll
 *.dylib
 
-**/*/.idea/*
-**/*/target/*
+**/.idea/
 
 # Qt-es
 object_script.*.Release
