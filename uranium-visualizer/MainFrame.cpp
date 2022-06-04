@@ -1,8 +1,10 @@
 #include "MainFrame.h"
+#include "FunctionColors.h"
 #include "TimelinePainter.h"
 #include <QMouseEvent>
 #include <QPainter>
-#include <array>
+#include <functional>
+#include <unordered_map>
 #include <stack>
 
 MainFrame::MainFrame(QWidget* parent)
@@ -74,10 +76,8 @@ bool MainFrame::drawThread(QPainter& painter, int index, const QRect& rect)
     auto& session      = m_ProfilingSessions[index];
     std::stack<size_t> eventStack;
 
-    int selX, selY, selW;
     auto hasHovered = false;
-    auto hasSelected = false;
-    auto hasHoveredSelected = false;
+    std::vector<std::function<void()>> renderLater;
     for (size_t i = 0; i < session.Events().size(); ++i)
     {
         auto& event = session.Events()[i];
@@ -103,6 +103,7 @@ bool MainFrame::drawThread(QPainter& painter, int index, const QRect& rect)
 
         const auto& name = session.Header().FunctionNames()[event.FunctionIndex()];
         auto yPosition   = m_FunctionHeight * (int)(eventStack.size() + 1) + threadHeight(index) * index + 5;
+        auto isSelected = m_HasSelectedFunction && m_SelectedFunctionBegin == &beginEvent;
         auto isHovered   = mousePosition >= beginEvent.CpuTicks() && mousePosition < event.CpuTicks()
             && m_LocalMousePosition.y() >= yPosition && m_LocalMousePosition.y() < yPosition + m_FunctionHeight;
         if (isHovered)
@@ -112,30 +113,27 @@ bool MainFrame::drawThread(QPainter& painter, int index, const QRect& rect)
 
             hasHovered = true;
         }
-        if (m_HasSelectedFunction && m_SelectedFunctionBegin == &beginEvent)
+        if (isSelected || isHovered)
         {
-            selX       = (int)startPos;
-            selY       = yPosition;
-            selW       = (int)(endPos - startPos);
-            hasHoveredSelected = isHovered;
-
-            hasSelected = true;
+            renderLater.emplace_back([this, &painter, name, startPos, yPosition, endPos, isHovered, isSelected]() {
+                drawFunction(painter, name, (int)startPos, yPosition, (int)(endPos - startPos), isHovered, isSelected);
+            });
         }
-        if (!m_HasSelectedFunction || m_SelectedFunctionBegin != &beginEvent)
+        else
         {
             drawFunction(painter, name, (int)startPos, yPosition, (int)(endPos - startPos), isHovered, false);
         }
     }
-    if (hasSelected)
+    for (auto& f : renderLater)
     {
-        const auto& name = session.Header().FunctionNames()[m_SelectedFunctionBegin->FunctionIndex()];
-        drawFunction(painter, name, selX, selY, selW, hasHoveredSelected, true);
+        f();
     }
 
     return hasHovered;
 }
 
-void MainFrame::drawFunction(QPainter& painter, const std::string& functionName, int x, int y, int w, bool isHovered, bool isSelected) const
+void MainFrame::drawFunction(
+    QPainter& painter, const std::string& functionName, int x, int y, int w, bool isHovered, bool isSelected) const
 {
     auto color = getFunctionColor(functionName.c_str());
     if (w <= 3)
@@ -156,14 +154,12 @@ void MainFrame::drawFunction(QPainter& painter, const std::string& functionName,
     {
         color = color.lighter();
     }
-    if (w > 20)
+    if (isSelected || isHovered)
     {
-        painter.fillRect(x + 1, y + 1, w - 2, m_FunctionHeight - 2, color);
+        painter.fillRect(x, 0, w, m_FunctionHeight + y, QColor::fromRgb(32, 32, 32, 32));
     }
-    else
-    {
-        painter.fillRect(x, y, w, m_FunctionHeight, color);
-    }
+
+    painter.fillRect(x, y, w, m_FunctionHeight, color);
 
     if (isSelected)
     {
@@ -191,10 +187,13 @@ void MainFrame::drawFunction(QPainter& painter, const std::string& functionName,
 
 QColor MainFrame::getFunctionColor(const char* functionName)
 {
-    static constexpr auto colorTable = std::array{ 0xCC6666, 0x66CC66, 0x6666CC, 0xCCCC66, 0xCC66CC, 0x66CCCC, 0xDAAA00 };
-
-    auto hash = std::hash<const char*>()(functionName);
-    return colorTable[hash % colorTable.size()];
+    static std::unordered_map<std::string, QColor> colors;
+    if (colors.find(functionName) == colors.end())
+    {
+        auto hash = std::hash<const char*>()(functionName);
+        colors[functionName] = UN::FunctionColors[hash % UN::FunctionColors.size()];
+    }
+    return colors[functionName];
 }
 
 void MainFrame::mouseMoveEvent(QMouseEvent* event)
@@ -228,9 +227,9 @@ void MainFrame::mousePressEvent(QMouseEvent* event)
     {
         if (m_HasHoveredFunction)
         {
-            m_HasSelectedFunction = true;
+            m_HasSelectedFunction   = true;
             m_SelectedFunctionBegin = m_HoveredFunctionBegin;
-            m_SelectedFunctionEnd = m_HoveredFunctionEnd;
+            m_SelectedFunctionEnd   = m_HoveredFunctionEnd;
         }
         else
         {

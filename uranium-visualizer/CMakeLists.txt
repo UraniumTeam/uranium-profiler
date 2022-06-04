@@ -30,7 +30,7 @@ set(PROJECT_SOURCES
         FileParser.h
         FileParser.cpp
         TimelinePainter.cpp
-        TimelinePainter.h)
+        TimelinePainter.h FunctionColors.h)
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(UraniumVisualizer
