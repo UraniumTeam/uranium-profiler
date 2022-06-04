@@ -43,6 +43,8 @@ namespace UN
             return true;
         }
 
+        void checkProblems(ProfilingSession& session);
+
     public:
         [[nodiscard]] static FileParser Open(const char* filename, std::vector<ParsingProblem>& problems);
         [[nodiscard]] ProfilingSession Parse();

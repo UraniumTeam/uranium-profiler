@@ -36,7 +36,14 @@ namespace UN
             return m_Type;
         }
 
-//        static SessionEvent GetFakeEvent();
+        [[nodiscard]] inline SessionEvent MakeEnd(uint64_t cpuTicks) const
+        {
+            SessionEvent result;
+            result.m_CpuTicks = cpuTicks;
+            result.m_FunctionIndex = m_FunctionIndex;
+            result.m_Type = EventType::End;
+            return result;
+        }
 
         static std::vector<SessionEvent> GetFakeEvents(uint32_t count);
     };

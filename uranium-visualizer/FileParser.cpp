@@ -1,4 +1,5 @@
 #include "FileParser.h"
+#include <stack>
 
 namespace UN
 {
@@ -139,7 +140,61 @@ namespace UN
         }
 
         Close();
-        return { header, events };
+        auto session = ProfilingSession(header, events);
+        session.SortEvents();
+        checkProblems(session);
+        return session;
+    }
+
+    void FileParser::checkProblems(ProfilingSession& session)
+    {
+        std::stack<SessionEvent> eventStack;
+        std::stack<SessionEvent> invalidEnds;
+        std::vector<SessionEvent> validEvents;
+        for (auto& event : session.Events())
+        {
+            if (event.EventType() == UN::EventType::Begin)
+            {
+                if (invalidEnds.empty() || invalidEnds.top().FunctionIndex() != event.FunctionIndex())
+                {
+                    eventStack.push(event);
+                    validEvents.push_back(event);
+                }
+                else
+                {
+                    invalidEnds.pop();
+                }
+                continue;
+            }
+
+            if (eventStack.empty())
+            {
+                std::stringstream ss;
+                ss << "The function \"" << session.Header().FunctionNames()[event.FunctionIndex()]
+                   << "\" ended before it started: It will be removed.";
+                m_Problems.push_back(ParsingProblem::Warning(ss.str()));
+                invalidEnds.push(event);
+                continue;
+            }
+
+            eventStack.pop();
+            validEvents.push_back(event);
+        }
+
+        auto endInsertionTime = validEvents.back().CpuTicks();
+        while (!eventStack.empty())
+        {
+            auto event = eventStack.top();
+            eventStack.pop();
+            std::stringstream ss;
+            ss << "The function \"" << session.Header().FunctionNames()[event.FunctionIndex()]
+               << "\" has no end in the session: The end will be inserted.";
+            m_Problems.push_back(ParsingProblem::Warning(ss.str()));
+            validEvents.push_back(event.MakeEnd(endInsertionTime));
+            endInsertionTime += 100;
+        }
+
+        session.Events() = validEvents;
     }
 
     void FileParser::Close()

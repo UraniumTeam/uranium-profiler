@@ -27,6 +27,11 @@ namespace UN
             return m_Events;
         }
 
+        [[nodiscard]] inline std::vector<SessionEvent>& Events()
+        {
+            return m_Events;
+        }
+
         void SortEvents();
 
         static ProfilingSession GetFakeProfilingSession();

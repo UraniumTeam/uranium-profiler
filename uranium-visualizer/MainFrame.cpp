@@ -227,7 +227,6 @@ void MainFrame::addProfilingSession(const UN::ProfilingSession& session)
 {
     auto& s         = m_ProfilingSessions.emplace_back(session);
     m_StartPosition = (int64_t)s.Events()[0].CpuTicks();
-    s.SortEvents();
 }
 
 void MainFrame::clearProfilingSessions()
