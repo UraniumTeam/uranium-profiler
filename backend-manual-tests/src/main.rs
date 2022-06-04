@@ -1,7 +1,5 @@
 use uranium_backend::*;
-use std::time::{Duration, Instant};
-use std::arch::x86_64::_rdtsc;
-use std::fs::File;
+use std::time::Duration;
 use std::thread;
 use uranium_backend::interface::FunctionData;
 use uranium_prof_macro::profile_func;
