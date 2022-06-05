@@ -12,7 +12,7 @@
  - GUI application to visualize collected data
  - Simple integration with excisting programs
 
-The profiler consists of two main modules: what we call the 'frontend' and the 'beckend'. Frontend is the visualizer application, that you see on [screenshots here](#screenshots). Backend is the Rust crate that helps you to collect data from your program.
+The profiler consists of two main modules: what we call the 'frontend' and the 'backend'. Frontend is the visualizer application, that you see on [screenshots here](#screenshots). Backend is the Rust crate that helps you to collect data from your program.
 
 Currently, Uranium is not production-ready yet. So the only way to use Uranium is to build it from source.
 
