@@ -10,9 +10,6 @@ class MainFrame : public QFrame
 
     std::vector<UN::ProfilingSession> m_ProfilingSessions;
 
-    QAction m_FunctionHoverChanged;
-    QAction m_FunctionSelectionChanged;
-
     bool m_HasHoveredFunction;
     UN::SessionEvent* m_HoveredFunctionBegin;
     UN::SessionEvent* m_HoveredFunctionEnd;
@@ -50,8 +47,13 @@ protected:
 
 public:
     explicit MainFrame(QWidget* parent = nullptr);
+
+    QAction FunctionHoverChanged;
+    QAction FunctionSelectionChanged;
+
     [[nodiscard]] int64_t mousePositionInTicks() const;
     void addProfilingSession(const UN::ProfilingSession& session);
     void clearProfilingSessions();
+
     ~MainFrame() override = default;
 };

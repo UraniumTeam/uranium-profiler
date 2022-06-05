@@ -19,7 +19,7 @@ MainFrame::MainFrame(QWidget* parent)
     setFrameStyle(QFrame::Panel | QFrame::Sunken);
     setFocusPolicy(Qt::StrongFocus);
 
-    connect(&m_FunctionHoverChanged, &QAction::triggered, this, [this]() {
+    connect(&FunctionHoverChanged, &QAction::triggered, this, [this]() {
         QCursor cursor;
         if (m_HasHoveredFunction)
         {
@@ -58,7 +58,7 @@ void MainFrame::paintEvent(QPaintEvent* e)
     }
     if (wasHovered != m_HasHoveredFunction)
     {
-        m_FunctionHoverChanged.trigger();
+        FunctionHoverChanged.trigger();
     }
 
     UN::TimelinePainter tlPainter(painter, m_ProfilingSessions[0].Header().NanosecondsInTick());
