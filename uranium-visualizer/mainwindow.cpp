@@ -17,7 +17,23 @@ MainWindow::MainWindow(QWidget* parent)
     setStyleSheet(R"(
 QMessageBox {
     background-color: rgb(53, 53, 53);
-})");
+}
+QMenuBar::item:selected {
+    color: white;
+    background: #5D5E5F;
+}
+QMenuBar QMenu::item:selected {
+    color: black;
+    background-color: #90a0c0;
+}
+QMessageBox QPushButton {
+    color: rgb(53, 53, 53);
+    background-color: #F2F2F2;
+}
+QDockWidget::title {
+    background-color: #505050;
+}
+)");
 
     m_Palette = QPalette();
     m_Palette.setColor(QPalette::Window, QColor(53, 53, 53));
@@ -39,7 +55,7 @@ QMessageBox {
     m_Palette.setColor(QPalette::Dark, QColor(0x626262));
     m_Palette.setColor(QPalette::NoRole, QColor(0x626262));
 
-    m_Palette.setColor(QPalette::Highlight, QColor(42, 130, 218));
+    m_Palette.setColor(QPalette::Highlight, QColor(0x90a0c0));
     m_Palette.setColor(QPalette::HighlightedText, Qt::black);
     m_Palette.setColor(QPalette::Shadow, Qt::black);
     QApplication::setPalette(m_Palette);
@@ -164,6 +180,8 @@ void MainWindow::createDockWidgets()
         QStringList{} << "Name"
                       << "Time in ms"
                       << "% of parent");
+    m_FunctionInfoTable->horizontalHeader()
+            ->setStyleSheet("QHeaderView::section, QHeaderView { background-color: #626262 }");
 
     for (int i = 0; i < 3; ++i)
     {

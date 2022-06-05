@@ -60,7 +60,7 @@ Now you should see `uranium_session_bin.ups` file and `uranium_session_bin` dire
 the time the sample program was running. You can now open the '.ups' file in profiler frontend.
 
 ## Usage
-To use Uranium to profile your Rust program you need to add dependencies to your Cargo.toml, place attributes under the functions you want to measure and save the results.
+To use Uranium to profile your Rust program you need to add dependencies to your Cargo.toml, place attributes on the functions you want to measure and save the results.
 ### Cargo Dependencies
 Add this to your `Cargo.toml`:
 ```toml
