@@ -3,6 +3,36 @@
 #include <QFrame>
 #include <QCursor>
 #include <QAction>
+#include <optional>
+
+struct FunctionCall
+{
+    UN::ProfilingSession* Session;
+    size_t BeginIndex;
+    size_t EndIndex;
+
+    FunctionCall(UN::ProfilingSession* session, size_t beginIndex, size_t endIndex)
+        : Session(session)
+        , BeginIndex(beginIndex)
+        , EndIndex(endIndex)
+    {
+    }
+
+    [[nodiscard]] UN::SessionEvent& begin() const
+    {
+        return Session->Events()[BeginIndex];
+    }
+
+    [[nodiscard]] UN::SessionEvent& end() const
+    {
+        return Session->Events()[EndIndex];
+    }
+};
+
+inline bool operator==(const FunctionCall& lhs, const FunctionCall& rhs)
+{
+    return &lhs.begin() == &rhs.begin();
+}
 
 class MainFrame : public QFrame
 {
@@ -10,26 +40,18 @@ class MainFrame : public QFrame
 
     std::vector<UN::ProfilingSession> m_ProfilingSessions;
 
-    bool m_HasHoveredFunction;
-    UN::SessionEvent* m_HoveredFunctionBegin;
-    UN::SessionEvent* m_HoveredFunctionEnd;
-
-    bool m_HasSelectedFunction;
-    UN::SessionEvent* m_SelectedFunctionBegin;
-    UN::SessionEvent* m_SelectedFunctionEnd;
-
     double m_PixelsPerTick;
     int64_t m_StartPosition;
     int m_FunctionHeight;
 
     double m_WheelSensitivity;
-    bool m_MousePressed;
+    bool m_RightMousePressed;
     QPoint m_LocalMousePosition;
     QPoint m_GlobalMousePosition;
     QPoint m_LastGlobalMousePosition;
 
     void drawFunction(QPainter& painter, const std::string& functionName, int x, int y, int w, bool isHovered, bool isSelected) const;
-    bool drawThread(QPainter& painter, int index, const QRect& rect);
+    void drawThread(QPainter& painter, int index, const QRect& rect);
     static QColor getFunctionColor(const char* functionName);
     [[nodiscard]] int threadHeight(int index) const;
 
@@ -48,8 +70,11 @@ protected:
 public:
     explicit MainFrame(QWidget* parent = nullptr);
 
-    QAction FunctionHoverChanged;
-    QAction FunctionSelectionChanged;
+    QAction* FunctionHoverChanged;
+    QAction* FunctionSelectionChanged;
+
+    std::optional<FunctionCall> HoveredFunction;
+    std::optional<FunctionCall> SelectedFunction;
 
     [[nodiscard]] int64_t mousePositionInTicks() const;
     void addProfilingSession(const UN::ProfilingSession& session);

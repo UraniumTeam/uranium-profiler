@@ -12,16 +12,19 @@ MainFrame::MainFrame(QWidget* parent)
     , m_PixelsPerTick(0.002)
     , m_WheelSensitivity(1.05)
     , m_FunctionHeight(30)
-    , m_MousePressed(false)
+    , m_RightMousePressed(false)
     , m_StartPosition(0)
 {
     setMouseTracking(true);
     setFrameStyle(QFrame::Panel | QFrame::Sunken);
     setFocusPolicy(Qt::StrongFocus);
 
-    connect(&FunctionHoverChanged, &QAction::triggered, this, [this]() {
+    FunctionSelectionChanged = new QAction(this);
+    FunctionHoverChanged = new QAction(this);
+
+    connect(FunctionHoverChanged, &QAction::triggered, this, [this]() {
         QCursor cursor;
-        if (m_HasHoveredFunction)
+        if (HoveredFunction.has_value())
         {
             cursor.setShape(Qt::CrossCursor);
         }
@@ -50,15 +53,15 @@ void MainFrame::paintEvent(QPaintEvent* e)
     QPainter painter(this);
     auto rect = contentsRect();
 
-    auto wasHovered      = m_HasHoveredFunction;
-    m_HasHoveredFunction = false;
+    auto wasHovered      = HoveredFunction.has_value();
+    HoveredFunction.reset();
     for (int i = 0; i < m_ProfilingSessions.size(); ++i)
     {
-        m_HasHoveredFunction |= drawThread(painter, i, rect);
+        drawThread(painter, i, rect);
     }
-    if (wasHovered != m_HasHoveredFunction)
+    if (wasHovered != HoveredFunction.has_value())
     {
-        FunctionHoverChanged.trigger();
+        FunctionHoverChanged->trigger();
     }
 
     UN::TimelinePainter tlPainter(painter, m_ProfilingSessions[0].Header().NanosecondsInTick());
@@ -70,13 +73,12 @@ void MainFrame::paintEvent(QPaintEvent* e)
     tlPainter.draw();
 }
 
-bool MainFrame::drawThread(QPainter& painter, int index, const QRect& rect)
+void MainFrame::drawThread(QPainter& painter, int index, const QRect& rect)
 {
     auto mousePosition = mousePositionInTicks();
     auto& session      = m_ProfilingSessions[index];
     std::stack<size_t> eventStack;
 
-    auto hasHovered = false;
     std::vector<std::function<void()>> renderLater;
     for (size_t i = 0; i < session.Events().size(); ++i)
     {
@@ -87,6 +89,7 @@ bool MainFrame::drawThread(QPainter& painter, int index, const QRect& rect)
             continue;
         }
 
+        auto beginIndex = eventStack.top();
         auto& beginEvent = session.Events()[eventStack.top()];
         eventStack.pop();
         auto startPos = (double)((int64_t)beginEvent.CpuTicks() - m_StartPosition) * m_PixelsPerTick;
@@ -103,15 +106,12 @@ bool MainFrame::drawThread(QPainter& painter, int index, const QRect& rect)
 
         const auto& name = session.Header().FunctionNames()[event.FunctionIndex()];
         auto yPosition   = m_FunctionHeight * (int)(eventStack.size() + 1) + threadHeight(index) * index + 5;
-        auto isSelected = m_HasSelectedFunction && m_SelectedFunctionBegin == &beginEvent;
+        auto isSelected = SelectedFunction.has_value() && &SelectedFunction.value().begin() == &beginEvent;
         auto isHovered   = mousePosition >= beginEvent.CpuTicks() && mousePosition < event.CpuTicks()
             && m_LocalMousePosition.y() >= yPosition && m_LocalMousePosition.y() < yPosition + m_FunctionHeight;
         if (isHovered)
         {
-            m_HoveredFunctionBegin = &beginEvent;
-            m_HoveredFunctionEnd   = &event;
-
-            hasHovered = true;
+            HoveredFunction = FunctionCall(&session, beginIndex, i);
         }
         if (isSelected || isHovered)
         {
@@ -128,8 +128,6 @@ bool MainFrame::drawThread(QPainter& painter, int index, const QRect& rect)
     {
         f();
     }
-
-    return hasHovered;
 }
 
 void MainFrame::drawFunction(
@@ -202,7 +200,7 @@ void MainFrame::mouseMoveEvent(QMouseEvent* event)
 
     m_LocalMousePosition  = event->pos();
     m_GlobalMousePosition = QCursor::pos();
-    if (m_MousePressed)
+    if (m_RightMousePressed)
     {
         auto diffX     = m_LastGlobalMousePosition.x() - m_GlobalMousePosition.x();
         auto diffTicks = diffX / m_PixelsPerTick;
@@ -221,20 +219,12 @@ void MainFrame::mousePressEvent(QMouseEvent* event)
     QWidget::mousePressEvent(event);
     if (event->button() == Qt::RightButton)
     {
-        m_MousePressed = true;
+        m_RightMousePressed = true;
     }
     if (event->button() == Qt::LeftButton)
     {
-        if (m_HasHoveredFunction)
-        {
-            m_HasSelectedFunction   = true;
-            m_SelectedFunctionBegin = m_HoveredFunctionBegin;
-            m_SelectedFunctionEnd   = m_HoveredFunctionEnd;
-        }
-        else
-        {
-            m_HasSelectedFunction = false;
-        }
+        SelectedFunction = HoveredFunction;
+        FunctionSelectionChanged->trigger();
         update();
     }
 }
@@ -244,7 +234,7 @@ void MainFrame::mouseReleaseEvent(QMouseEvent* event)
     QWidget::mouseReleaseEvent(event);
     if (event->button() == Qt::MouseButton::RightButton)
     {
-        m_MousePressed = false;
+        m_RightMousePressed = false;
     }
 }
 
