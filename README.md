@@ -96,4 +96,5 @@ You can now open the '.ups' file in the visualizer (Ctrl+O).
 
 ## Screenshots
 
-![Screenshot](images/screenshot1.png)
+![Screenshot 1](images/screenshot1.png)
+![Screenshot 2](images/screenshot2.png)
