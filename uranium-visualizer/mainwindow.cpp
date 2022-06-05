@@ -65,6 +65,8 @@ QDockWidget::title {
     m_MainFrame->resize(width(), height());
     setCentralWidget(m_MainFrame);
 
+    connect(m_MainFrame->FunctionSelectionChanged, &QAction::triggered, this, &MainWindow::selectFunction);
+
     m_MainFrame->setAutoFillBackground(true);
     m_MainFrame->show();
 
@@ -93,8 +95,17 @@ void MainWindow::createActions()
 
 void MainWindow::openFile()
 {
+    QFileDialog dialog(this, tr("Open a session file"));
+    dialog.setFileMode(QFileDialog::ExistingFile);
+    dialog.setNameFilter(tr("Uranium session files (*.ups)"));
+    dialog.setViewMode(QFileDialog::Detail);
+    if (!dialog.exec())
+    {
+        return;
+    }
     m_MainFrame->clearProfilingSessions();
-    auto filename = QFileDialog::getOpenFileName(this, tr("Open a session file")).toStdString();
+
+    auto filename = dialog.selectedFiles()[0].toStdString();
     std::ifstream file(filename);
     std::string upt;
     auto hasErrors = false;
@@ -105,7 +116,8 @@ void MainWindow::openFile()
         if (!problems.empty())
         {
             std::stringstream ss;
-            if (upt.length() > 32) {
+            if (upt.length() > 32)
+            {
                 upt = upt.substr(0, 29) + "...";
             }
             ss << "<h3>Problems while parsing the file <em>\"" << upt << "\"</em> of session <em>\"" << filename
@@ -113,15 +125,18 @@ void MainWindow::openFile()
             for (const auto& problem : problems)
             {
                 hasErrors |= problem.Kind == UN::ParsingProblemKind::Error;
-                if (problem.Kind == UN::ParsingProblemKind::Error) {
+                if (problem.Kind == UN::ParsingProblemKind::Error)
+                {
                     ss << "<p style='color: red'>";
                 }
-                else {
+                else
+                {
                     ss << "<p style='color: yellow'>";
                 }
                 ss << problem.ToString() << "</p>";
             }
-            if (hasErrors) {
+            if (hasErrors)
+            {
                 ss << "Aborting due to previous error(s)";
             }
             QMessageBox msgBox(this);
@@ -170,24 +185,48 @@ void MainWindow::createDockWidgets()
     auto* dock = new QDockWidget(tr("Function Info"), this);
     dock->setPalette(m_Palette);
     m_FunctionInfoTable = new QTableWidget(dock);
-    m_FunctionInfoTable->setColumnCount(3);
+    m_FunctionInfoTable->setColumnCount(6);
     m_FunctionInfoTable->setRowCount(1);
     m_FunctionInfoTable->verticalHeader()->setVisible(false);
     m_FunctionInfoTable->setStyleSheet("QHeaderView::section, QHeaderView { background-color: #626262 }");
     m_FunctionInfoTable->setShowGrid(false);
 
     m_FunctionInfoTable->setHorizontalHeaderLabels(
-        QStringList{} << "Name"
-                      << "Time in ms"
-                      << "% of parent");
-    m_FunctionInfoTable->horizontalHeader()
-            ->setStyleSheet("QHeaderView::section, QHeaderView { background-color: #626262 }");
-
-    for (int i = 0; i < 3; ++i)
-    {
-        auto* newItem = new QTableWidgetItem(tr("..."));
-        m_FunctionInfoTable->setItem(0, i, newItem);
-    }
+        QStringList{} << "Function"
+                      << "Self (ns)"
+                      << "Total (ms)"
+                      << "Total (%)"
+                      << "Max (ms)"
+                      << "Count");
+    m_FunctionInfoTable->horizontalHeader()->setStyleSheet("QHeaderView::section, QHeaderView { background-color: #626262 }");
     dock->setWidget(m_FunctionInfoTable);
     addDockWidget(Qt::RightDockWidgetArea, dock);
+}
+
+void MainWindow::selectFunction()
+{
+    m_FunctionInfoTable->clearContents();
+    if (!m_MainFrame->SelectedFunction.has_value())
+    {
+        return;
+    }
+
+    auto call = m_MainFrame->SelectedFunction.value();
+    double selfNanos, totalMs, totalPercent, maxMs;
+    uint64_t count;
+    call.Session->functionStats(call.BeginIndex, selfNanos, totalMs, totalPercent, maxMs, count);
+
+    auto functionName  = call.Session->Header().FunctionNames()[call.begin().FunctionIndex()];
+    auto* functionItem = new QTableWidgetItem(QString::fromStdString(functionName));
+    m_FunctionInfoTable->setItem(0, 0, functionItem);
+    auto* selfMsItem = new QTableWidgetItem(QString::number(std::round(selfNanos)));
+    m_FunctionInfoTable->setItem(0, 1, selfMsItem);
+    auto* totalMsItem = new QTableWidgetItem(QString::number(totalMs));
+    m_FunctionInfoTable->setItem(0, 2, totalMsItem);
+    auto* totalPercentItem = new QTableWidgetItem(QString::number(totalPercent));
+    m_FunctionInfoTable->setItem(0, 3, totalPercentItem);
+    auto* maxMsItem = new QTableWidgetItem(QString::number(maxMs));
+    m_FunctionInfoTable->setItem(0, 4, maxMsItem);
+    auto* countItem = new QTableWidgetItem(QString::number(count));
+    m_FunctionInfoTable->setItem(0, 5, countItem);
 }

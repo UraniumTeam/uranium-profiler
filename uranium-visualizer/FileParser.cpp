@@ -194,7 +194,7 @@ namespace UN
             endInsertionTime += 100;
         }
 
-        session.Events() = validEvents;
+        session.setEvents(validEvents);
     }
 
     void FileParser::Close()

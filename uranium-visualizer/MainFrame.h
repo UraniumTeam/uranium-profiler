@@ -1,8 +1,8 @@
 #pragma once
 #include "ProfilingSession.h"
-#include <QFrame>
-#include <QCursor>
 #include <QAction>
+#include <QCursor>
+#include <QFrame>
 #include <optional>
 
 struct FunctionCall
@@ -50,7 +50,8 @@ class MainFrame : public QFrame
     QPoint m_GlobalMousePosition;
     QPoint m_LastGlobalMousePosition;
 
-    void drawFunction(QPainter& painter, const std::string& functionName, int x, int y, int w, bool isHovered, bool isSelected) const;
+    void drawFunction(
+        QPainter& painter, const std::string& functionName, int x, int y, int w, bool isHovered, bool isSelected) const;
     void drawThread(QPainter& painter, int index, const QRect& rect);
     static QColor getFunctionColor(const char* functionName);
     [[nodiscard]] int threadHeight(int index) const;
@@ -58,8 +59,9 @@ class MainFrame : public QFrame
 protected:
     void paintEvent(QPaintEvent* event) override;
 
-    [[nodiscard]] QSize sizeHint() const override {
-        return ((QWidget*) parent())->size();
+    [[nodiscard]] QSize sizeHint() const override
+    {
+        return ((QWidget*)parent())->size();
     }
 
     void mouseMoveEvent(QMouseEvent* event) override;

@@ -31,6 +31,7 @@ class MainWindow : public QMainWindow
     void showAbout();
 
 private slots:
+    void selectFunction();
 
 protected:
 
