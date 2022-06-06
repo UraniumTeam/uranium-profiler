@@ -32,25 +32,25 @@ namespace UN
                                   uint64_t& count)
         {
             auto& beginEvent = m_Events[beginIndex];
-            auto& name = m_Header.FunctionNames()[beginEvent.FunctionIndex()];
-            selfNanos = (double)m_CallStats[beginIndex] * m_Header.NanosecondsInTick();
-            totalMs = (double)m_GlobalStats[name].TotalTicks * m_Header.NanosecondsInTick() / 1'000'000;
+            auto& name = m_Header.functionNames()[beginEvent.functionIndex()];
+            selfNanos = (double)m_CallStats[beginIndex] * m_Header.nanosecondsInTick();
+            totalMs = (double)m_GlobalStats[name].TotalTicks * m_Header.nanosecondsInTick() / 1'000'000;
             totalPercent = (double)m_GlobalStats[name].TotalTicks / (double)m_SessionTicks * 100;
-            maxMs = (double)m_GlobalStats[name].MaxTicks * m_Header.NanosecondsInTick() / 1'000'000;
+            maxMs = (double)m_GlobalStats[name].MaxTicks * m_Header.nanosecondsInTick() / 1'000'000;
             count = m_GlobalStats[name].Count;
         }
 
-        [[nodiscard]] inline const SessionHeader& Header() const
+        [[nodiscard]] inline const SessionHeader& header() const
         {
             return m_Header;
         }
 
-        [[nodiscard]] inline const std::vector<SessionEvent>& Events() const
+        [[nodiscard]] inline const std::vector<SessionEvent>& events() const
         {
             return m_Events;
         }
 
-        [[nodiscard]] inline std::vector<SessionEvent>& Events()
+        [[nodiscard]] inline std::vector<SessionEvent>& events()
         {
             return m_Events;
         }
@@ -58,28 +58,28 @@ namespace UN
         inline void setEvents(std::vector<SessionEvent>& events)
         {
             m_Events = events;
-            SortEvents();
-            CalculateStats();
+            sortEvents();
+            calculateStats();
         }
 
-        void SortEvents();
-        void CalculateStats();
+        void sortEvents();
+        void calculateStats();
 
-        static ProfilingSession GetFakeProfilingSession();
+        static ProfilingSession getFakeProfilingSession();
 
-        static std::string ToString(const ProfilingSession& ps);
+        static std::string toString(const ProfilingSession& ps);
     };
 
     template<typename T>
-    inline void Print(T t)
+    inline void print(T t)
     {
         std::cout << t << std::endl;
     }
 
     template<typename T, typename... Args>
-    inline void Print(T t, Args... args)
+    inline void print(T t, Args... args)
     {
         std::cout << t << ' ';
-        Print(args...);
+        print(args...);
     }
 } // namespace UN

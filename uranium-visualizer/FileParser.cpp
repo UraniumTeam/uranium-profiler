@@ -3,7 +3,7 @@
 
 namespace UN
 {
-    std::string ParsingProblem::ToString() const
+    std::string ParsingProblem::toString() const
     {
         std::stringstream ss;
         switch (Kind)
@@ -22,7 +22,7 @@ namespace UN
         return ss.str();
     }
 
-    ParsingProblem ParsingProblem::Warning(std::string message)
+    ParsingProblem ParsingProblem::warning(std::string message)
     {
         ParsingProblem result;
         result.Message = std::move(message);
@@ -30,7 +30,7 @@ namespace UN
         return result;
     }
 
-    ParsingProblem ParsingProblem::Error(std::string message)
+    ParsingProblem ParsingProblem::error(std::string message)
     {
         ParsingProblem result;
         result.Message = std::move(message);
@@ -38,13 +38,13 @@ namespace UN
         return result;
     }
 
-    FileParser FileParser::Open(const char* filename, std::vector<ParsingProblem>& problems)
+    FileParser FileParser::open(const char* filename, std::vector<ParsingProblem>& problems)
     {
         FileParser result(problems);
         fopen_s(&result.m_File, filename, "rb");
         if (result.m_File == nullptr)
         {
-            problems.push_back(ParsingProblem::Error("Couldn't open a file"));
+            problems.push_back(ParsingProblem::error("Couldn't open a file"));
             return FileParser(problems);
         }
         fseek(result.m_File, 0L, SEEK_END);
@@ -53,7 +53,7 @@ namespace UN
         return result;
     }
 
-    ProfilingSession FileParser::Parse()
+    ProfilingSession FileParser::parse()
     {
         size_t filePointer = 0;
 
@@ -61,12 +61,12 @@ namespace UN
             std::stringstream ss;
             ss << "Out of file range at value \"" << valueName << "\": "
                << "The entire session is broken.";
-            m_Problems.push_back(ParsingProblem::Error(ss.str()));
+            m_Problems.push_back(ParsingProblem::error(ss.str()));
             return {};
         };
 
         double nanosecondsInTick;
-        if (!TryReadFromFile(&nanosecondsInTick, filePointer))
+        if (!tryReadFromFile(&nanosecondsInTick, filePointer))
         {
             return outOfRangeError("Nanoseconds in tick");
         }
@@ -77,12 +77,12 @@ namespace UN
             std::stringstream ss;
             ss << "Probably invalid number of nanoseconds in tick (" << nanosecondsInTick << "): "
                << "Most likely, the entire session is broken.";
-            m_Problems.push_back(ParsingProblem::Error(ss.str()));
+            m_Problems.push_back(ParsingProblem::error(ss.str()));
             return {};
         }
 
         uint32_t functionCount;
-        if (!TryReadFromFile(&functionCount, filePointer))
+        if (!tryReadFromFile(&functionCount, filePointer))
         {
             return outOfRangeError("Function count");
         }
@@ -92,13 +92,13 @@ namespace UN
         {
             uint16_t nameLength;
             std::vector<char> functionName;
-            if (!TryReadFromFile(&nameLength, filePointer))
+            if (!tryReadFromFile(&nameLength, filePointer))
             {
                 return outOfRangeError("Function name length");
             }
 
             functionName.resize(nameLength, 0);
-            if (!TryReadFromFile(functionName.data(), filePointer, nameLength))
+            if (!tryReadFromFile(functionName.data(), filePointer, nameLength))
             {
                 return outOfRangeError("Function name");
             }
@@ -109,7 +109,7 @@ namespace UN
                 {
                     continue;
                 }
-                m_Problems.push_back(ParsingProblem::Error("A function had an invalid character: "
+                m_Problems.push_back(ParsingProblem::error("A function had an invalid character: "
                                                            "The entire session is broken."));
                 return {};
             }
@@ -117,31 +117,31 @@ namespace UN
         }
 
         uint32_t eventCount;
-        if (!TryReadFromFile(&eventCount, filePointer))
+        if (!tryReadFromFile(&eventCount, filePointer))
         {
             return outOfRangeError("Event count");
         }
         auto header = SessionHeader(nanosecondsInTick, functionCount, functionNames, eventCount);
 
         std::vector<SessionEvent> events;
-        for (uint32_t i = 0; i < header.EventCount(); ++i)
+        for (uint32_t i = 0; i < header.eventCount(); ++i)
         {
             uint32_t functionIndex;
             uint64_t cpuTicks;
-            if (!TryReadFromFile(&functionIndex, filePointer))
+            if (!tryReadFromFile(&functionIndex, filePointer))
             {
                 return outOfRangeError("Event count");
             }
-            if (!TryReadFromFile(&cpuTicks, filePointer))
+            if (!tryReadFromFile(&cpuTicks, filePointer))
             {
                 return outOfRangeError("Event count");
             }
             events.emplace_back(functionIndex, cpuTicks);
         }
 
-        Close();
+        close();
         auto session = ProfilingSession(header, events);
-        session.SortEvents();
+        session.sortEvents();
         checkProblems(session);
         return session;
     }
@@ -151,11 +151,11 @@ namespace UN
         std::stack<SessionEvent> eventStack;
         std::stack<SessionEvent> invalidEnds;
         std::vector<SessionEvent> validEvents;
-        for (auto& event : session.Events())
+        for (auto& event : session.events())
         {
-            if (event.EventType() == UN::EventType::Begin)
+            if (event.type() == UN::EventType::Begin)
             {
-                if (invalidEnds.empty() || invalidEnds.top().FunctionIndex() != event.FunctionIndex())
+                if (invalidEnds.empty() || invalidEnds.top().functionIndex() != event.functionIndex())
                 {
                     eventStack.push(event);
                     validEvents.push_back(event);
@@ -170,9 +170,9 @@ namespace UN
             if (eventStack.empty())
             {
                 std::stringstream ss;
-                ss << "The function \"" << session.Header().FunctionNames()[event.FunctionIndex()]
+                ss << "The function \"" << session.header().functionNames()[event.functionIndex()]
                    << "\" ended before it started: It will be removed.";
-                m_Problems.push_back(ParsingProblem::Warning(ss.str()));
+                m_Problems.push_back(ParsingProblem::warning(ss.str()));
                 invalidEnds.push(event);
                 continue;
             }
@@ -181,23 +181,23 @@ namespace UN
             validEvents.push_back(event);
         }
 
-        auto endInsertionTime = validEvents.back().CpuTicks();
+        auto endInsertionTime = validEvents.back().cpuTicks();
         while (!eventStack.empty())
         {
             auto event = eventStack.top();
             eventStack.pop();
             std::stringstream ss;
-            ss << "The function \"" << session.Header().FunctionNames()[event.FunctionIndex()]
+            ss << "The function \"" << session.header().functionNames()[event.functionIndex()]
                << "\" has no end in the session: The end will be inserted.";
-            m_Problems.push_back(ParsingProblem::Warning(ss.str()));
-            validEvents.push_back(event.MakeEnd(endInsertionTime));
+            m_Problems.push_back(ParsingProblem::warning(ss.str()));
+            validEvents.push_back(event.makeEnd(endInsertionTime));
             endInsertionTime += 100;
         }
 
         session.setEvents(validEvents);
     }
 
-    void FileParser::Close()
+    void FileParser::close()
     {
         fclose(m_File);
     }

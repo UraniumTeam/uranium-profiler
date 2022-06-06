@@ -15,7 +15,7 @@ namespace UN
 
     }
 
-    SessionHeader SessionHeader::GetFakeHeader()
+    SessionHeader SessionHeader::getFakeHeader()
     {
         auto n = 100;
         std::vector<std::string> FunctionNames;

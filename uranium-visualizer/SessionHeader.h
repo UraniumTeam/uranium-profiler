@@ -19,26 +19,26 @@ namespace UN
         SessionHeader(
             double NanosecondsInTick, uint32_t FunctionCount, std::vector<std::string> FunctionNames, uint32_t EventCount);
 
-        [[nodiscard]] inline double NanosecondsInTick() const
+        [[nodiscard]] inline double nanosecondsInTick() const
         {
             return m_NanosecondsInTick;
         }
 
-        [[nodiscard]] inline uint32_t FunctionCount() const
+        [[nodiscard]] inline uint32_t functionCount() const
         {
             return m_FunctionCount;
         }
 
-        [[nodiscard]] inline const std::vector<std::string>& FunctionNames() const
+        [[nodiscard]] inline const std::vector<std::string>& functionNames() const
         {
             return m_FunctionNames;
         }
 
-        [[nodiscard]] inline uint32_t EventCount() const
+        [[nodiscard]] inline uint32_t eventCount() const
         {
             return m_EventCount;
         }
 
-        static SessionHeader GetFakeHeader();
+        static SessionHeader getFakeHeader();
     };
 } // namespace UN

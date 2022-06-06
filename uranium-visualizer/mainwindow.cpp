@@ -112,7 +112,7 @@ void MainWindow::openFile()
     while (file >> upt)
     {
         std::vector<UN::ParsingProblem> problems;
-        auto session = UN::FileParser::Open(upt.c_str(), problems).Parse();
+        auto session = UN::FileParser::open(upt.c_str(), problems).parse();
         if (!problems.empty())
         {
             std::stringstream ss;
@@ -133,7 +133,7 @@ void MainWindow::openFile()
                 {
                     ss << "<p style='color: yellow'>";
                 }
-                ss << problem.ToString() << "</p>";
+                ss << problem.toString() << "</p>";
             }
             if (hasErrors)
             {
@@ -216,7 +216,7 @@ void MainWindow::selectFunction()
     uint64_t count;
     call.Session->functionStats(call.BeginIndex, selfNanos, totalMs, totalPercent, maxMs, count);
 
-    auto functionName  = call.Session->Header().FunctionNames()[call.begin().FunctionIndex()];
+    auto functionName  = call.Session->header().functionNames()[call.begin().functionIndex()];
     auto* functionItem = new QTableWidgetItem(QString::fromStdString(functionName));
     m_FunctionInfoTable->setItem(0, 0, functionItem);
     auto* selfMsItem = new QTableWidgetItem(QString::number(std::round(selfNanos)));

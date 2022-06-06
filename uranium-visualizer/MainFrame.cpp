@@ -64,7 +64,7 @@ void MainFrame::paintEvent(QPaintEvent* e)
         FunctionHoverChanged->trigger();
     }
 
-    UN::TimelinePainter tlPainter(painter, m_ProfilingSessions[0].Header().NanosecondsInTick());
+    UN::TimelinePainter tlPainter(painter, m_ProfilingSessions[0].header().nanosecondsInTick());
     tlPainter.setRegion(m_StartPosition, m_PixelsPerTick);
     tlPainter.setColor(Qt::white);
     tlPainter.setRect(rect);
@@ -80,20 +80,20 @@ void MainFrame::drawThread(QPainter& painter, int index, const QRect& rect)
     std::stack<size_t> eventStack;
 
     std::vector<std::function<void()>> renderLater;
-    for (size_t i = 0; i < session.Events().size(); ++i)
+    for (size_t i = 0; i < session.events().size(); ++i)
     {
-        auto& event = session.Events()[i];
-        if (event.EventType() == UN::EventType::Begin)
+        auto& event = session.events()[i];
+        if (event.type() == UN::EventType::Begin)
         {
             eventStack.push(i);
             continue;
         }
 
         auto beginIndex = eventStack.top();
-        auto& beginEvent = session.Events()[eventStack.top()];
+        auto& beginEvent = session.events()[eventStack.top()];
         eventStack.pop();
-        auto startPos = (double)((int64_t)beginEvent.CpuTicks() - m_StartPosition) * m_PixelsPerTick;
-        auto endPos   = (double)((int64_t)event.CpuTicks() - m_StartPosition) * m_PixelsPerTick;
+        auto startPos = (double)((int64_t)beginEvent.cpuTicks() - m_StartPosition) * m_PixelsPerTick;
+        auto endPos   = (double)((int64_t)event.cpuTicks() - m_StartPosition) * m_PixelsPerTick;
 
         if (startPos >= rect.right() && endPos >= rect.right() || startPos <= rect.left() && endPos <= rect.left())
         {
@@ -104,10 +104,10 @@ void MainFrame::drawThread(QPainter& painter, int index, const QRect& rect)
         startPos      = std::clamp(startPos, (double)(rect.left() - pad), (double)(rect.right() + pad));
         endPos        = std::clamp(endPos, (double)(rect.left() - pad), (double)(rect.right() + pad));
 
-        const auto& name = session.Header().FunctionNames()[event.FunctionIndex()];
+        const auto& name = session.header().functionNames()[event.functionIndex()];
         auto yPosition   = m_FunctionHeight * (int)(eventStack.size() + 1) + threadHeight(index) * index + 5;
         auto isSelected = SelectedFunction.has_value() && &SelectedFunction.value().begin() == &beginEvent;
-        auto isHovered   = mousePosition >= beginEvent.CpuTicks() && mousePosition < event.CpuTicks()
+        auto isHovered   = mousePosition >= beginEvent.cpuTicks() && mousePosition < event.cpuTicks()
             && m_LocalMousePosition.y() >= yPosition && m_LocalMousePosition.y() < yPosition + m_FunctionHeight;
         if (isHovered)
         {
@@ -285,7 +285,7 @@ void MainFrame::wheelEvent(QWheelEvent* event)
 void MainFrame::addProfilingSession(const UN::ProfilingSession& session)
 {
     auto& s         = m_ProfilingSessions.emplace_back(session);
-    m_StartPosition = (int64_t)s.Events()[0].CpuTicks();
+    m_StartPosition = (int64_t)s.events()[0].cpuTicks();
 }
 
 void MainFrame::clearProfilingSessions()
