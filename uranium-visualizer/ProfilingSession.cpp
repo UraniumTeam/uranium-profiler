@@ -8,12 +8,12 @@ namespace UN
     ProfilingSession::ProfilingSession(SessionHeader header, std::vector<SessionEvent> events)
         : m_Header(std::move(header))
         , m_Events(std::move(events))
-        , m_SessionTicks(0)
         , m_MaxHeight(0)
+        , m_SessionTicks(0)
     {
     }
 
-    void ProfilingSession::CalculateStats()
+    void ProfilingSession::calculateStats()
     {
         auto minTime = std::numeric_limits<uint64_t>::max();
         auto maxTime = std::numeric_limits<uint64_t>::min();
@@ -27,10 +27,10 @@ namespace UN
         {
             auto& event = m_Events[i];
 
-            minTime = std::min(minTime, event.CpuTicks());
-            maxTime = std::max(maxTime, event.CpuTicks());
+            minTime = std::min(minTime, event.cpuTicks());
+            maxTime = std::max(maxTime, event.cpuTicks());
 
-            if (event.EventType() == EventType::Begin)
+            if (event.type() == EventType::Begin)
             {
                 eventStack.push(i);
                 m_MaxHeight = std::max(m_MaxHeight, (uint32_t)eventStack.size());
@@ -40,10 +40,10 @@ namespace UN
             auto beginIndex = eventStack.top();
             auto& beginEvent = m_Events[beginIndex];
             eventStack.pop();
-            auto length = event.CpuTicks() - beginEvent.CpuTicks();
+            auto length = event.cpuTicks() - beginEvent.cpuTicks();
             m_CallStats[beginIndex] = length;
 
-            auto& name = m_Header.FunctionNames()[beginEvent.FunctionIndex()];
+            auto& name = m_Header.functionNames()[beginEvent.functionIndex()];
             if (m_GlobalStats.find(name) == m_GlobalStats.end())
             {
                 m_GlobalStats[name] = {};
@@ -56,31 +56,31 @@ namespace UN
         m_SessionTicks = maxTime - minTime;
     }
 
-    ProfilingSession ProfilingSession::GetFakeProfilingSession()
+    ProfilingSession ProfilingSession::getFakeProfilingSession()
     {
-        auto h = SessionHeader::GetFakeHeader();
-        return ProfilingSession(h, SessionEvent::GetFakeEvents(h.EventCount()));
+        auto h = SessionHeader::getFakeHeader();
+        return ProfilingSession(h, SessionEvent::getFakeEvents(h.eventCount()));
     }
 
-    std::string ProfilingSession::ToString(const ProfilingSession& ps)
+    std::string ProfilingSession::toString(const ProfilingSession& ps)
     {
         std::stringstream res;
-        res << "NanosecondsInTick " << std::to_string(ps.Header().NanosecondsInTick()) << ";\nFunctionCount "
-            << std::to_string(ps.Header().EventCount()) << ";\nFunctionNames:\n";
-        auto h = ps.Header().FunctionNames();
+        res << "NanosecondsInTick " << std::to_string(ps.header().nanosecondsInTick()) << ";\nFunctionCount "
+            << std::to_string(ps.header().eventCount()) << ";\nFunctionNames:\n";
+        auto h = ps.header().functionNames();
         res << h.at(0);
         for (auto i = h.begin() + 1; i != h.end(); ++i)
         {
             res << ", " << *i;
         }
-        res << ";\nEventCount " << std::to_string(ps.Header().EventCount());
+        res << ";\nEventCount " << std::to_string(ps.header().eventCount());
         return res.str();
     }
 
-    void ProfilingSession::SortEvents()
+    void ProfilingSession::sortEvents()
     {
         std::sort(m_Events.begin(), m_Events.end(), [](const SessionEvent& lhs, const SessionEvent& rhs) {
-            return lhs.CpuTicks() < rhs.CpuTicks();
+            return lhs.cpuTicks() < rhs.cpuTicks();
         });
     }
 } // namespace UN

@@ -20,7 +20,6 @@ set(PROJECT_SOURCES
         mainwindow.h
         SessionHeader.h
         SessionHeader.cpp
-        EventType.h
         SessionEvent.h
         SessionEvent.cpp
         ProfilingSession.h

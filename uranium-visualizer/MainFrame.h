@@ -20,12 +20,12 @@ struct FunctionCall
 
     [[nodiscard]] UN::SessionEvent& begin() const
     {
-        return Session->Events()[BeginIndex];
+        return Session->events()[BeginIndex];
     }
 
     [[nodiscard]] UN::SessionEvent& end() const
     {
-        return Session->Events()[EndIndex];
+        return Session->events()[EndIndex];
     }
 };
 

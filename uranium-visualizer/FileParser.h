@@ -15,9 +15,9 @@ namespace UN
         std::string Message;
         ParsingProblemKind Kind;
 
-        [[nodiscard]] std::string ToString() const;
-        [[nodiscard]] static ParsingProblem Warning(std::string message);
-        [[nodiscard]] static ParsingProblem Error(std::string message);
+        [[nodiscard]] std::string toString() const;
+        [[nodiscard]] static ParsingProblem warning(std::string message);
+        [[nodiscard]] static ParsingProblem error(std::string message);
     };
 
     class FileParser
@@ -32,7 +32,7 @@ namespace UN
         }
 
         template<class T>
-        bool TryReadFromFile(T* result, size_t& pointer, size_t length = 1)
+        bool tryReadFromFile(T* result, size_t& pointer, size_t length = 1)
         {
             if (pointer + sizeof(T) * length > m_FileSize)
             {
@@ -46,8 +46,8 @@ namespace UN
         void checkProblems(ProfilingSession& session);
 
     public:
-        [[nodiscard]] static FileParser Open(const char* filename, std::vector<ParsingProblem>& problems);
-        [[nodiscard]] ProfilingSession Parse();
-        void Close();
+        [[nodiscard]] static FileParser open(const char* filename, std::vector<ParsingProblem>& problems);
+        [[nodiscard]] ProfilingSession parse();
+        void close();
     };
 } // namespace UN
