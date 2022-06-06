@@ -30,12 +30,14 @@ set(PROJECT_SOURCES
         FileParser.h
         FileParser.cpp
         TimelinePainter.cpp
-        TimelinePainter.h FunctionColors.h)
+        TimelinePainter.h
+        FunctionColors.h)
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
+    set(app_icon_resource_windows "${CMAKE_CURRENT_SOURCE_DIR}/app.rc")
     qt_add_executable(UraniumVisualizer
         MANUAL_FINALIZATION
-        ${PROJECT_SOURCES}
+        ${PROJECT_SOURCES} ${app_icon_resource_windows}
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET UraniumVisualizer APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
