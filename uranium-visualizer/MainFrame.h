@@ -40,6 +40,9 @@ class MainFrame : public QFrame
 
     std::vector<UN::ProfilingSession> m_ProfilingSessions;
 
+    uint64_t m_CurrentSessionBegin;
+    uint64_t m_CurrentSessionEnd;
+
     double m_PixelsPerTick;
     int64_t m_StartPosition;
     int m_FunctionHeight;

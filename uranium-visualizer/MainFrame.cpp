@@ -4,8 +4,8 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <functional>
-#include <unordered_map>
 #include <stack>
+#include <unordered_map>
 
 MainFrame::MainFrame(QWidget* parent)
     : QFrame(parent)
@@ -18,9 +18,10 @@ MainFrame::MainFrame(QWidget* parent)
     setMouseTracking(true);
     setFrameStyle(QFrame::Panel | QFrame::Sunken);
     setFocusPolicy(Qt::StrongFocus);
+    clearProfilingSessions();
 
     FunctionSelectionChanged = new QAction(this);
-    FunctionHoverChanged = new QAction(this);
+    FunctionHoverChanged     = new QAction(this);
 
     connect(FunctionHoverChanged, &QAction::triggered, this, [this]() {
         QCursor cursor;
@@ -53,7 +54,7 @@ void MainFrame::paintEvent(QPaintEvent* e)
     QPainter painter(this);
     auto rect = contentsRect();
 
-    auto wasHovered      = HoveredFunction.has_value();
+    auto wasHovered = HoveredFunction.has_value();
     HoveredFunction.reset();
     for (int i = 0; i < m_ProfilingSessions.size(); ++i)
     {
@@ -89,7 +90,7 @@ void MainFrame::drawThread(QPainter& painter, int index, const QRect& rect)
             continue;
         }
 
-        auto beginIndex = eventStack.top();
+        auto beginIndex  = eventStack.top();
         auto& beginEvent = session.events()[eventStack.top()];
         eventStack.pop();
         auto startPos = (double)((int64_t)beginEvent.cpuTicks() - m_StartPosition) * m_PixelsPerTick;
@@ -106,7 +107,7 @@ void MainFrame::drawThread(QPainter& painter, int index, const QRect& rect)
 
         const auto& name = session.header().functionNames()[event.functionIndex()];
         auto yPosition   = m_FunctionHeight * (int)(eventStack.size() + 1) + threadHeight(index) * index + 5;
-        auto isSelected = SelectedFunction.has_value() && &SelectedFunction.value().begin() == &beginEvent;
+        auto isSelected  = SelectedFunction.has_value() && &SelectedFunction.value().begin() == &beginEvent;
         auto isHovered   = mousePosition >= beginEvent.cpuTicks() && mousePosition < event.cpuTicks()
             && m_LocalMousePosition.y() >= yPosition && m_LocalMousePosition.y() < yPosition + m_FunctionHeight;
         if (isHovered)
@@ -188,7 +189,7 @@ QColor MainFrame::getFunctionColor(const char* functionName)
     static std::unordered_map<std::string, QColor> colors;
     if (colors.find(functionName) == colors.end())
     {
-        auto hash = std::hash<const char*>()(functionName);
+        auto hash            = std::hash<const char*>()(functionName);
         colors[functionName] = UN::FunctionColors[hash % UN::FunctionColors.size()];
     }
     return colors[functionName];
@@ -285,12 +286,16 @@ void MainFrame::wheelEvent(QWheelEvent* event)
 void MainFrame::addProfilingSession(const UN::ProfilingSession& session)
 {
     auto& s         = m_ProfilingSessions.emplace_back(session);
-    m_StartPosition = (int64_t)s.events()[0].cpuTicks();
+    m_CurrentSessionBegin = std::min(m_CurrentSessionBegin, s.globalStats().SessionStart);
+    m_CurrentSessionEnd = std::max(m_CurrentSessionEnd, s.globalStats().SessionEnd);
+    m_StartPosition = (int64_t)m_CurrentSessionBegin;
+    auto length     = m_CurrentSessionEnd - m_CurrentSessionBegin;
+    m_PixelsPerTick = (double)width() / (double)length;
 }
 
 void MainFrame::clearProfilingSessions()
 {
     m_ProfilingSessions.clear();
-    m_PixelsPerTick = 0.002;
-    m_StartPosition = 0;
+    m_CurrentSessionBegin = std::numeric_limits<uint64_t>::max();
+    m_CurrentSessionEnd = std::numeric_limits<uint64_t>::min();
 }

@@ -8,16 +8,15 @@ namespace UN
     ProfilingSession::ProfilingSession(SessionHeader header, std::vector<SessionEvent> events)
         : m_Header(std::move(header))
         , m_Events(std::move(events))
-        , m_MaxHeight(0)
-        , m_SessionTicks(0)
+        , m_SessionStats()
     {
     }
 
     void ProfilingSession::calculateStats()
     {
-        auto minTime = std::numeric_limits<uint64_t>::max();
-        auto maxTime = std::numeric_limits<uint64_t>::min();
-        m_MaxHeight  = 0;
+        auto minTime             = std::numeric_limits<uint64_t>::max();
+        auto maxTime             = std::numeric_limits<uint64_t>::min();
+        m_SessionStats.MaxHeight = 0;
 
         m_CallStats.clear();
         m_CallStats.resize(m_Events.size());
@@ -33,14 +32,14 @@ namespace UN
             if (event.type() == EventType::Begin)
             {
                 eventStack.push(i);
-                m_MaxHeight = std::max(m_MaxHeight, (uint32_t)eventStack.size());
+                m_SessionStats.MaxHeight = std::max(m_SessionStats.MaxHeight, (uint32_t)eventStack.size());
                 continue;
             }
 
-            auto beginIndex = eventStack.top();
+            auto beginIndex  = eventStack.top();
             auto& beginEvent = m_Events[beginIndex];
             eventStack.pop();
-            auto length = event.cpuTicks() - beginEvent.cpuTicks();
+            auto length             = event.cpuTicks() - beginEvent.cpuTicks();
             m_CallStats[beginIndex] = length;
 
             auto& name = m_Header.functionNames()[beginEvent.functionIndex()];
@@ -53,13 +52,14 @@ namespace UN
             m_GlobalStats[name].Count++;
         }
 
-        m_SessionTicks = maxTime - minTime;
+        m_SessionStats.SessionStart = minTime;
+        m_SessionStats.SessionEnd   = maxTime;
     }
 
     ProfilingSession ProfilingSession::getFakeProfilingSession()
     {
         auto h = SessionHeader::getFakeHeader();
-        return ProfilingSession(h, SessionEvent::getFakeEvents(h.eventCount()));
+        return { h, SessionEvent::getFakeEvents(h.eventCount()) };
     }
 
     std::string ProfilingSession::toString(const ProfilingSession& ps)
