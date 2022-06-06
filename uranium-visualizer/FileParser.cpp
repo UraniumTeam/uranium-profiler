@@ -41,7 +41,7 @@ namespace UN
     FileParser FileParser::open(const char* filename, std::vector<ParsingProblem>& problems)
     {
         FileParser result(problems);
-        fopen_s(&result.m_File, filename, "rb");
+        result.m_File = fopen(filename, "rb");
         if (result.m_File == nullptr)
         {
             problems.push_back(ParsingProblem::error("Couldn't open a file"));
