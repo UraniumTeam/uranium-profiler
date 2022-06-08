@@ -46,6 +46,7 @@ class MainFrame : public QFrame
     double m_PixelsPerTick;
     int64_t m_StartPosition;
     int m_FunctionHeight;
+    int m_TimelineHeight;
 
     double m_WheelSensitivity;
     bool m_RightMousePressed;
