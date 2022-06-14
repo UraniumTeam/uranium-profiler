@@ -7,6 +7,32 @@
 
 namespace UN
 {
+    class FuncsTreeNode
+    {
+    private:
+        uint32_t m_FuncIdx; //index in header().functionNames()
+        std::vector<FuncsTreeNode> m_Descendants;
+
+    public:
+        FuncsTreeNode(uint32_t funcIdx)
+            : m_FuncIdx(funcIdx) {};
+
+        [[nodiscard]] const uint32_t funcIdx() const
+        {
+            return m_FuncIdx;
+        }
+
+        [[nodiscard]] const std::vector<FuncsTreeNode>& descendants() const
+        {
+            return m_Descendants;
+        }
+
+        [[nodiscard]] std::vector<FuncsTreeNode>& descendants()
+        {
+            return m_Descendants;
+        }
+    };
+
     struct SessionStats
     {
         uint32_t MaxHeight;
@@ -80,6 +106,12 @@ namespace UN
         static ProfilingSession getFakeProfilingSession();
 
         static std::string toString(const ProfilingSession& ps);
+
+        ///строит дерево текущего вызова, в узлах которого индексы имён функций из заголовка
+        const FuncsTreeNode getFuncsTree(uint32_t eventIdx /*index in events()*/) const;
+
+        ///возвращает список индексов имён функций из заголовка, состоящий только из потомков текущего вызова входящей функции
+        const std::vector<uint32_t> getFuncsDescendants(uint32_t eventIdx /*index in events()*/) const;
     };
 
     template<typename T>
