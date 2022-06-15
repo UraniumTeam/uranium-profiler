@@ -23,6 +23,7 @@ class MainWindow : public QMainWindow
     MainFrame* m_MainFrame;
     QTableWidget* m_FunctionInfoTable;
     QPalette m_Palette;
+    std::vector<uint32_t> m_SelectedFunctionDescendants;
 
     void createActions();
 

@@ -56,6 +56,32 @@ namespace UN
         m_SessionStats.SessionEnd   = maxTime;
     }
 
+    std::vector<uint32_t> ProfilingSession::functionDescendantsImpl(uint32_t eventIdx) const
+    {
+        std::vector<uint32_t> result;
+        std::stack<uint32_t> eventStack;
+
+        for (size_t i = eventIdx; i < m_Events.size(); ++i)
+        {
+            auto& event = m_Events[i];
+
+            if (event.type() == EventType::Begin)
+            {
+                eventStack.push(i);
+                result.push_back(i);
+                continue;
+            }
+
+            eventStack.pop();
+            if (eventStack.empty())
+            {
+                break;
+            }
+        }
+
+        return result;
+    }
+
     ProfilingSession ProfilingSession::getFakeProfilingSession()
     {
         auto h = SessionHeader::getFakeHeader();
@@ -84,9 +110,7 @@ namespace UN
         });
     }
 
-    //пока что не получилось построить дерево нерекурсивной функцией
-    //в теории переполнение стека будет при вложенности >1000
-    const FuncsTreeNode ProfilingSession::getFuncsTree(uint32_t eventIdx) const
+    FuncsTreeNode ProfilingSession::getFuncsTree(uint32_t eventIdx) const
     {
         uint32_t deep = 0;
         const auto recurSearch = [&](uint32_t eventIdx, uint32_t& deep) -> FuncsTreeNode
@@ -106,7 +130,7 @@ namespace UN
                        || (nextEvent.functionIndex() == event.functionIndex()
                            && nextEvent.type() == event.type()))
                 {
-                    res.descendants().emplace_back(impl(eventIdx, deep, impl));
+                    res.m_Descendants.emplace_back(impl(eventIdx, deep, impl));
                     if (event.type() == EventType::Begin) {
                         ++deep;
                     }
@@ -122,33 +146,8 @@ namespace UN
         return recurSearch(eventIdx, deep);
     }
 
-    const std::vector<uint32_t> ProfilingSession::getFuncsDescendants(uint32_t eventIdx) const
+    std::vector<uint32_t> ProfilingSession::functionDescendants(uint32_t eventIdx) const
     {
-        std::vector<uint32_t> res;
-        auto event = m_Events[eventIdx];
-        auto n = eventIdx;
-        if (event.type() == EventType::Begin) {
-            ++n;
-        }
-        else {
-            --n;
-        }
-        auto nextEvent = m_Events[n];
-        while (nextEvent.functionIndex() != event.functionIndex()
-               || (nextEvent.functionIndex() == event.functionIndex()
-                   && nextEvent.type() == event.type()))
-        {
-            if (nextEvent.type() == event.type()) {
-                res.emplace_back(nextEvent.functionIndex());
-            }
-            if (event.type() == EventType::Begin) {
-                ++n;
-            }
-            else {
-                --n;
-            }
-            nextEvent = m_Events[n];
-        }
-        return res;
+        return functionDescendantsImpl(eventIdx);
     }
 } // namespace UN

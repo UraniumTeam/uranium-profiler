@@ -10,24 +10,23 @@ namespace UN
     class FuncsTreeNode
     {
     private:
-        uint32_t m_FuncIdx; //index in header().functionNames()
+        uint32_t m_EventIndex;
         std::vector<FuncsTreeNode> m_Descendants;
 
-    public:
-        FuncsTreeNode(uint32_t funcIdx)
-            : m_FuncIdx(funcIdx) {};
+        friend class ProfilingSession;
 
-        [[nodiscard]] const uint32_t funcIdx() const
+    public:
+        explicit FuncsTreeNode(uint32_t eventIndex)
+            : m_EventIndex(eventIndex)
         {
-            return m_FuncIdx;
+        }
+
+        [[nodiscard]] uint32_t eventIndex() const
+        {
+            return m_EventIndex;
         }
 
         [[nodiscard]] const std::vector<FuncsTreeNode>& descendants() const
-        {
-            return m_Descendants;
-        }
-
-        [[nodiscard]] std::vector<FuncsTreeNode>& descendants()
         {
             return m_Descendants;
         }
@@ -52,9 +51,11 @@ namespace UN
         SessionHeader m_Header;
         std::vector<SessionEvent> m_Events;
 
-        SessionStats m_SessionStats;
+        SessionStats m_SessionStats{};
         std::vector<uint64_t> m_CallStats;
         std::unordered_map<std::string, FunctionGlobalStats> m_GlobalStats;
+
+        std::vector<uint32_t> functionDescendantsImpl(uint32_t eventIdx) const;
 
     public:
         ProfilingSession() = default;
@@ -65,17 +66,17 @@ namespace UN
             return m_SessionStats;
         }
 
-        inline void functionStats(size_t beginIndex, double& selfNanos, double& totalMs, double& totalPercent, double& maxMs,
-                                  uint64_t& count)
+        inline void functionStats(
+            size_t beginIndex, double& selfNanos, double& totalMs, double& totalPercent, double& maxMs, uint64_t& count)
         {
-            auto& beginEvent = m_Events[beginIndex];
-            auto& name = m_Header.functionNames()[beginEvent.functionIndex()];
+            auto& beginEvent  = m_Events[beginIndex];
+            auto& name        = m_Header.functionNames()[beginEvent.functionIndex()];
             auto sessionTicks = globalStats().SessionEnd - globalStats().SessionStart;
-            selfNanos = (double)m_CallStats[beginIndex] * m_Header.nanosecondsInTick();
-            totalMs = (double)m_GlobalStats[name].TotalTicks * m_Header.nanosecondsInTick() / 1'000'000;
-            totalPercent = (double)m_GlobalStats[name].TotalTicks / (double)sessionTicks * 100;
-            maxMs = (double)m_GlobalStats[name].MaxTicks * m_Header.nanosecondsInTick() / 1'000'000;
-            count = m_GlobalStats[name].Count;
+            selfNanos         = (double)m_CallStats[beginIndex] * m_Header.nanosecondsInTick();
+            totalMs           = (double)m_GlobalStats[name].TotalTicks * m_Header.nanosecondsInTick() / 1'000'000;
+            totalPercent      = (double)m_GlobalStats[name].TotalTicks / (double)sessionTicks * 100;
+            maxMs             = (double)m_GlobalStats[name].MaxTicks * m_Header.nanosecondsInTick() / 1'000'000;
+            count             = m_GlobalStats[name].Count;
         }
 
         [[nodiscard]] inline const SessionHeader& header() const
@@ -107,11 +108,10 @@ namespace UN
 
         static std::string toString(const ProfilingSession& ps);
 
-        ///строит дерево текущего вызова, в узлах которого индексы имён функций из заголовка
-        const FuncsTreeNode getFuncsTree(uint32_t eventIdx /*index in events()*/) const;
+        FuncsTreeNode getFuncsTree(uint32_t eventIdx) const;
 
-        ///возвращает список индексов имён функций из заголовка, состоящий только из потомков текущего вызова входящей функции
-        const std::vector<uint32_t> getFuncsDescendants(uint32_t eventIdx /*index in events()*/) const;
+        // Get function descendants including the function itself
+        std::vector<uint32_t> functionDescendants(uint32_t eventIdx) const;
     };
 
     template<typename T>

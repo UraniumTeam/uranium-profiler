@@ -206,27 +206,37 @@ void MainWindow::createDockWidgets()
 void MainWindow::selectFunction()
 {
     m_FunctionInfoTable->clearContents();
+    m_FunctionInfoTable->setRowCount(1);
     if (!m_MainFrame->SelectedFunction.has_value())
     {
         return;
     }
 
     auto call = m_MainFrame->SelectedFunction.value();
-    double selfNanos, totalMs, totalPercent, maxMs;
-    uint64_t count;
-    call.Session->functionStats(call.BeginIndex, selfNanos, totalMs, totalPercent, maxMs, count);
+    auto descendants = call.Session->functionDescendants(call.BeginIndex);
+    m_FunctionInfoTable->setRowCount((int)descendants.size());
+    for (int i = 0; i < descendants.size(); ++i)
+    {
+        double selfNanos, totalMs, totalPercent, maxMs;
+        uint64_t count;
+        call.Session->functionStats(descendants[i], selfNanos, totalMs, totalPercent, maxMs, count);
 
-    auto functionName  = call.Session->header().functionNames()[call.begin().functionIndex()];
-    auto* functionItem = new QTableWidgetItem(QString::fromStdString(functionName));
-    m_FunctionInfoTable->setItem(0, 0, functionItem);
-    auto* selfMsItem = new QTableWidgetItem(QString::number(std::round(selfNanos)));
-    m_FunctionInfoTable->setItem(0, 1, selfMsItem);
-    auto* totalMsItem = new QTableWidgetItem(QString::number(totalMs));
-    m_FunctionInfoTable->setItem(0, 2, totalMsItem);
-    auto* totalPercentItem = new QTableWidgetItem(QString::number(totalPercent));
-    m_FunctionInfoTable->setItem(0, 3, totalPercentItem);
-    auto* maxMsItem = new QTableWidgetItem(QString::number(maxMs));
-    m_FunctionInfoTable->setItem(0, 4, maxMsItem);
-    auto* countItem = new QTableWidgetItem(QString::number(count));
-    m_FunctionInfoTable->setItem(0, 5, countItem);
+//        connect( m_FunctionInfoTable->verticalHeader(), &QHeaderView::sectionClicked , this, [](int idx){
+//
+//        });
+        auto event = call.Session->events()[descendants[i]];
+        auto functionName  = call.Session->header().functionNames()[event.functionIndex()];
+        auto* functionItem = new QTableWidgetItem(QString::fromStdString(functionName));
+        m_FunctionInfoTable->setItem(i, 0, functionItem);
+        auto* selfMsItem = new QTableWidgetItem(QString::number(std::round(selfNanos)));
+        m_FunctionInfoTable->setItem(i, 1, selfMsItem);
+        auto* totalMsItem = new QTableWidgetItem(QString::number(totalMs));
+        m_FunctionInfoTable->setItem(i, 2, totalMsItem);
+        auto* totalPercentItem = new QTableWidgetItem(QString::number(totalPercent));
+        m_FunctionInfoTable->setItem(i, 3, totalPercentItem);
+        auto* maxMsItem = new QTableWidgetItem(QString::number(maxMs));
+        m_FunctionInfoTable->setItem(i, 4, maxMsItem);
+        auto* countItem = new QTableWidgetItem(QString::number(count));
+        m_FunctionInfoTable->setItem(i, 5, countItem);
+    }
 }
