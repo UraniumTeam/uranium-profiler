@@ -103,6 +103,7 @@ void MainWindow::openFile()
     {
         return;
     }
+    m_FunctionInfoTable->clearContents();
     m_MainFrame->clearProfilingSessions();
 
     auto filename = dialog.selectedFiles()[0].toStdString();

@@ -306,6 +306,8 @@ void MainFrame::addProfilingSession(const UN::ProfilingSession& session)
 
 void MainFrame::clearProfilingSessions()
 {
+    SelectedFunction = {};
+    HoveredFunction = {};
     m_ProfilingSessions.clear();
     m_CurrentSessionBegin = std::numeric_limits<uint64_t>::max();
     m_CurrentSessionEnd   = std::numeric_limits<uint64_t>::min();
