@@ -190,6 +190,7 @@ void MainWindow::createDockWidgets()
     m_FunctionInfoTable->verticalHeader()->setVisible(false);
     m_FunctionInfoTable->setStyleSheet("QHeaderView::section, QHeaderView { background-color: #626262 }");
     m_FunctionInfoTable->setShowGrid(false);
+    m_FunctionInfoTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
     m_FunctionInfoTable->setHorizontalHeaderLabels(
         QStringList{} << "Function"
