@@ -83,4 +83,72 @@ namespace UN
             return lhs.cpuTicks() < rhs.cpuTicks();
         });
     }
+
+    //пока что не получилось построить дерево нерекурсивной функцией
+    //в теории переполнение стека будет при вложенности >1000
+    const FuncsTreeNode ProfilingSession::getFuncsTree(uint32_t eventIdx) const
+    {
+        uint32_t deep = 0;
+        const auto recurSearch = [&](uint32_t eventIdx, uint32_t& deep) -> FuncsTreeNode
+        {
+            auto recurSearch_impl = [&](uint32_t eventIdx, uint32_t& deep, const auto& impl) -> FuncsTreeNode
+            {
+                auto event = m_Events[eventIdx];
+                FuncsTreeNode res(event.functionIndex());
+                if (event.type() == EventType::Begin) {
+                    ++deep;
+                }
+                else {
+                    --deep;
+                }
+                auto nextEvent = m_Events[eventIdx + deep];
+                while (nextEvent.functionIndex() != event.functionIndex()
+                       || (nextEvent.functionIndex() == event.functionIndex()
+                           && nextEvent.type() == event.type()))
+                {
+                    res.descendants().emplace_back(impl(eventIdx, deep, impl));
+                    if (event.type() == EventType::Begin) {
+                        ++deep;
+                    }
+                    else {
+                        --deep;
+                    }
+                    nextEvent = m_Events[eventIdx + deep];
+                }
+                return res;
+            };
+            return recurSearch_impl(eventIdx, deep, recurSearch_impl);
+        };
+        return recurSearch(eventIdx, deep);
+    }
+
+    const std::vector<uint32_t> ProfilingSession::getFuncsDescendants(uint32_t eventIdx) const
+    {
+        std::vector<uint32_t> res;
+        auto event = m_Events[eventIdx];
+        auto n = eventIdx;
+        if (event.type() == EventType::Begin) {
+            ++n;
+        }
+        else {
+            --n;
+        }
+        auto nextEvent = m_Events[n];
+        while (nextEvent.functionIndex() != event.functionIndex()
+               || (nextEvent.functionIndex() == event.functionIndex()
+                   && nextEvent.type() == event.type()))
+        {
+            if (nextEvent.type() == event.type()) {
+                res.emplace_back(nextEvent.functionIndex());
+            }
+            if (event.type() == EventType::Begin) {
+                ++n;
+            }
+            else {
+                --n;
+            }
+            nextEvent = m_Events[n];
+        }
+        return res;
+    }
 } // namespace UN
