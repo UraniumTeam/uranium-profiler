@@ -33,6 +33,15 @@ QMessageBox QPushButton {
 QDockWidget::title {
     background-color: #505050;
 }
+QDockWidget QTableView::item:alternate {
+    background-color: #252525;
+}
+QDockWidget QTableView::item {
+    background-color: #404040;
+}
+QDockWidget QTableView::item:selected {
+    background-color: #90a0c0;
+}
 )");
 
     m_Palette = QPalette();
@@ -192,6 +201,9 @@ void MainWindow::createDockWidgets()
     m_FunctionInfoTable->setStyleSheet("QHeaderView::section, QHeaderView { background-color: #626262 }");
     m_FunctionInfoTable->setShowGrid(false);
     m_FunctionInfoTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_FunctionInfoTable->setAlternatingRowColors(true);
+    m_FunctionInfoTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+    m_FunctionInfoTable->setSelectionMode(QAbstractItemView::SingleSelection);
 
     m_FunctionInfoTable->setHorizontalHeaderLabels(
         QStringList{} << "Function"
