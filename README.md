@@ -21,7 +21,7 @@ Supported platforms:<br>
 ✔ - The module was tested on this platform.
 |  Module  | Windows | Linux | MacOS |
 | -------- |:-------:|:-----:|:-----:|
-| Frontend | ✔       |       |       |
+| Frontend | ✔       | ✔     |       |
 | Backend  | ✔       | ✔     |       |
 
 Please note that currently the backend works only with x86-64 CPUs due to usage of specific instructions (see [tracking issue for this](https://github.com/UraniumTeam/uranium-profiler/issues/11))
