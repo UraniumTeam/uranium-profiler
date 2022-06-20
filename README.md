@@ -19,10 +19,12 @@ Currently, Uranium is not production-ready yet. So the only way to use Uranium i
 ## Building
 Supported platforms:<br>
 ✔ - The module was tested on this platform.
-|  Module  | Windows | Linux | MacOS |
-| -------- |:-------:|:-----:|:-----:|
-| Frontend | ✔       | ✔     |       |
-| Backend  | ✔       | ✔     |       |
+|    Module    | Windows | Linux | MacOS |
+| ------------ |:-------:|:-----:|:-----:|
+| Frontend     | ✔       | ✔     |       |
+| Rust Backend | ✔       | ✔     |       |
+| C++ Backend  |         |        |       |
+| C# Backend   |         |        |       |
 
 Please note that currently the backend works only with x86-64 CPUs due to usage of specific instructions (see [tracking issue for this](https://github.com/UraniumTeam/uranium-profiler/issues/11))
 
