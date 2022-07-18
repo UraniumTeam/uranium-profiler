@@ -10,7 +10,7 @@
  - Nanosecond resolution
  - Low overhead per function
  - GUI application to visualize collected data
- - Simple integration with excisting programs
+ - Simple integration with existing programs
 
 The profiler consists of two main modules: what we call the 'frontend' and the 'backend'. Frontend is the visualizer application, that you see on [screenshots here](#screenshots). Backend is the Rust crate that helps you to collect data from your program.
 
